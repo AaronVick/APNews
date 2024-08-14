@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
       if (inputText) {
         const [storedCategory, storedIndex] = inputText.split(':');
-        category = storedCategory || 'top';
+        category = storedCategory.toLowerCase().replace(/\s+/g, '-') || 'top';
         storyIndex = parseInt(storedIndex) || 0;
         console.log('Parsed category and story index from input text:', category, storyIndex);
       } else if (buttonIndex) {
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
 
       if (!rssData || rssData.length === 0) {
         console.error('No RSS data available for category:', category);
-        throw new Error('No RSS data available');
+        throw new Error(`Invalid category: ${category}`);
       }
 
       console.log('Fetched RSS data:', rssData);
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       console.log('Current story:', currentStory);
 
       // Ensure the base URL is correctly prefixed
-      const imageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}${currentStory.imageUrl}?${Date.now()}`;
+      const imageUrl = currentStory.imageUrl ? currentStory.imageUrl : `${process.env.NEXT_PUBLIC_BASE_URL}/default-placeholder.png?${Date.now()}`;
       const articleUrl = currentStory.url;
 
       console.log('Constructed image URL:', imageUrl);

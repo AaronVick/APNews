@@ -2,28 +2,16 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 
 async function fetchRSS(category) {
-    const categoryUrls = {
-        'top': 'http://rsshub.app/apnews/topics/ap-top-news',
-        'world': 'http://rsshub.app/apnews/topics/ap-world-news',
-        'tech': 'http://rsshub.app/apnews/topics/ap-technology-news',
-        'business': 'http://rsshub.app/apnews/topics/ap-business-news',
-    };
-
-    const url = categoryUrls[category];
+    const url = 'http://rsshub.app/apnews/topics/ap-top-news';
     
-    if (!url) {
-        console.error(`Error: Invalid category provided: ${category}`);
-        return { error: `Invalid category: ${category}` };
-    }
-
-    console.log(`Fetching RSS feed for category: ${category} from URL: ${url}`);
+    console.log(`Fetching RSS feed for top news from URL: ${url}`);
 
     try {
         const response = await axios.get(url);
-        console.log(`RSS feed fetched successfully for category: ${category}`);
+        console.log('RSS feed fetched successfully for top news');
 
         const parsedData = await xml2js.parseStringPromise(response.data, { mergeAttrs: true });
-        console.log(`RSS feed parsed successfully for category: ${category}`);
+        console.log('RSS feed parsed successfully for top news');
 
         const articles = parsedData.rss.channel[0].item.map(item => ({
             title: item.title[0],
@@ -33,11 +21,11 @@ async function fetchRSS(category) {
             author: item.author ? item.author[0] : '',
         }));
 
-        console.log(`Articles extracted successfully for category: ${category}`);
+        console.log('Articles extracted successfully for top news');
         return { articles };
     } catch (error) {
-        console.error(`Error fetching or parsing RSS feed for category: ${category}`, error);
-        return { error: `Failed to fetch or parse RSS feed for category: ${category}` };
+        console.error('Error fetching or parsing RSS feed for top news', error);
+        return { error: 'Failed to fetch or parse RSS feed for top news' };
     }
 }
 

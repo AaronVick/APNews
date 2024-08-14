@@ -1,4 +1,4 @@
-import fetchRSS from '../utils/fetchRSS';
+import fetchRSS from '../../utils/fetchRSS'; // Correct the path
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {

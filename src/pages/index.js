@@ -21,7 +21,7 @@ const Home = ({ baseUrl, imageUrl }) => {
         <meta property="fc:frame:image" content={imageUrl} />
         <meta property="fc:frame:button:1" content="Top" />
         <meta property="fc:frame:button:2" content="World" />
-        <meta property="fc:frame:button:3" content="US" />
+        <meta property="fc:frame:button:3" content="Tech" />
         <meta property="fc:frame:button:4" content="Biz" />
         <meta property="fc:frame:post_url" content={`${baseUrl}/api/handleAction`} />
       </Head>
@@ -30,7 +30,7 @@ const Home = ({ baseUrl, imageUrl }) => {
         <div>
           <button>Top</button>
           <button>World</button>
-          <button>US</button>
+          <button>Tech</button>
           <button>Biz</button>
         </div>
       </div>

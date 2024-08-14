@@ -1,100 +1,80 @@
 import fetchRSS from '../../utils/fetchRSS';
 
-export default async function handler(req, res) {
-  if (req.method === 'POST') {
-    try {
-      console.log('Received POST request:', req.body);
+export default async function handleAction(req, res) {
+  try {
+    const { buttonIndex } = req.body.untrustedData || {};
+    console.log('Button Index:', buttonIndex);
 
-      const { untrustedData } = req.body;
-      if (!untrustedData) {
-        console.error('No untrustedData in the request body');
-        throw new Error('Missing untrustedData');
-      }
-
-      const buttonIndex = untrustedData?.buttonIndex;
-      const inputText = untrustedData?.inputText;
-      console.log('Button index:', buttonIndex);
-      console.log('Input text:', inputText);
-
-      let category = 'top';
-      let storyIndex = 0;
-
-      if (inputText) {
-        const [storedCategory, storedIndex] = inputText.split(':');
-        category = storedCategory.toLowerCase().replace(/\s+/g, '-') || 'top';
-        storyIndex = parseInt(storedIndex) || 0;
-        console.log('Parsed category and story index from input text:', category, storyIndex);
-      } else if (buttonIndex) {
-        const categories = ['top', 'world', 'tech', 'biz'];
-        category = categories[buttonIndex - 1] || 'top';
-        console.log('Selected category based on button index:', category);
-      }
-
-      console.log('Fetching RSS data for category:', category);
-      const rssData = await fetchRSS(category);
-
-      if (!rssData || rssData.length === 0) {
-        console.error('No RSS data available for category:', category);
-        throw new Error(`Invalid category: ${category}`);
-      }
-
-      console.log('Fetched RSS data:', rssData);
-
-      const currentStory = rssData[storyIndex];
-
-      if (!currentStory || !currentStory.title || !currentStory.url) {
-        console.error('Invalid story data:', currentStory);
-        throw new Error('Invalid story data');
-      }
-
-      console.log('Current story:', currentStory);
-
-      // Ensure the base URL is correctly prefixed
-      const imageUrl = currentStory.imageUrl ? currentStory.imageUrl : `https://via.placeholder.com/1200x628.png?text=${encodeURIComponent(currentStory.title)}`;
-      const articleUrl = currentStory.url;
-
-      console.log('Constructed image URL:', imageUrl);
-      console.log('Constructed article URL:', articleUrl);
-
-      res.status(200).json({
-        frames: [
-          {
-            version: 'vNext',
-            image: imageUrl,
-            buttons: [
-              { label: 'Next', action: 'post', target: `${category}:${(storyIndex + 1) % rssData.length}` },
-              { label: 'Back', action: 'post', target: `${category}:${(storyIndex - 1 + rssData.length) % rssData.length}` },
-              { label: 'Read', action: 'link', target: articleUrl },
-              { label: 'Home', action: 'post' }
-            ],
-            title: currentStory.title,
-            inputText: `${category}:${storyIndex}`
-          }
-        ]
-      });
-    } catch (error) {
-      console.error('Error processing action:', error);
-
-      const errorMessage = encodeURIComponent(`Error: ${error.message}`);
-      const errorImageUrl = `https://via.placeholder.com/1200x630.png?text=${errorMessage}`;
-
-      res.status(200).json({
-        frames: [
-          {
-            version: 'vNext',
-            image: errorImageUrl,
-            buttons: [
-              { label: 'Home', action: 'post' }
-            ],
-            title: 'Error Occurred',
-            error: error.message,
-          }
-        ]
-      });
+    let category;
+    switch (buttonIndex) {
+      case 1:
+        category = 'top';
+        break;
+      case 2:
+        category = 'world';
+        break;
+      case 3:
+        category = 'tech';
+        break;
+      case 4:
+        category = 'business';
+        break;
+      default:
+        throw new Error(`Invalid button index: ${buttonIndex}`);
     }
-  } else {
-    res.setHeader('Allow', ['POST']);
-    console.error(`Method ${req.method} Not Allowed`);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+
+    console.log('Category selected:', category);
+
+    const articles = await fetchRSS(category);
+    if (!articles || articles.length === 0) {
+      throw new Error(`No articles found for category: ${category}`);
+    }
+
+    console.log('Fetched articles:', articles);
+
+    const article = articles[0];
+    if (!article) {
+      throw new Error(`No article found in fetched articles for category: ${category}`);
+    }
+
+    console.log('Selected article:', article);
+
+    const frameResponse = {
+      frames: [
+        {
+          version: 'vNext',
+          image: article.image || `https://via.placeholder.com/1200x628.png?text=${encodeURIComponent(article.title)}`,
+          buttons: [
+            { label: 'Next', action: 'post', target: `${category}:1` },
+            { label: 'Back', action: 'post', target: `${category}:${articles.length - 1}` },
+            { label: 'Read', action: 'link', target: article.link },
+            { label: 'Home', action: 'post' }
+          ],
+          title: article.title,
+          inputText: `${category}:0`
+        }
+      ]
+    };
+
+    console.log('Frame response:', frameResponse);
+
+    res.status(200).json(frameResponse);
+
+  } catch (error) {
+    console.error('Error occurred in handleAction:', error.message);
+
+    res.status(400).json({
+      frames: [
+        {
+          version: 'vNext',
+          image: `https://via.placeholder.com/1200x630.png?text=${encodeURIComponent(`Error: ${error.message}`)}`,
+          buttons: [
+            { label: 'Home', action: 'post' }
+          ],
+          title: 'Error Occurred',
+          error: error.message
+        }
+      ]
+    });
   }
 }

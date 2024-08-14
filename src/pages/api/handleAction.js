@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       console.log('Current story:', currentStory);
 
       // Ensure the base URL is correctly prefixed
-      const imageUrl = currentStory.imageUrl ? currentStory.imageUrl : `${process.env.NEXT_PUBLIC_BASE_URL}/default-placeholder.png?${Date.now()}`;
+      const imageUrl = currentStory.imageUrl ? currentStory.imageUrl : `https://via.placeholder.com/1200x628.png?text=${encodeURIComponent(currentStory.title)}`;
       const articleUrl = currentStory.url;
 
       console.log('Constructed image URL:', imageUrl);

@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const { action } = req.body;
-      const category = action.toLowerCase();
+      const category = action ? action.toLowerCase() : '';
 
       console.log('Action received:', action);
 
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
     } catch (error) {
       console.error('Error processing action:', error);
 
-      // Return a placeholder image with the error message wrapped as text
+      // Always provide an image URL, even in case of error
       const errorMessage = encodeURIComponent(`Error: ${error.message}`);
       const errorImageUrl = `https://via.placeholder.com/1024x536.png?text=${errorMessage}`;
 
@@ -68,7 +68,7 @@ export default async function handler(req, res) {
         frames: [
           {
             version: 'vNext',
-            image: errorImageUrl,
+            image: errorImageUrl,  // Provide an error image to ensure an image URL is always returned
             buttons: [
               { label: 'Home', action: 'home' }
             ],

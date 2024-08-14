@@ -30,8 +30,8 @@ export default async function handleAction(req, res) {
 
     // Get the current article
     const currentArticle = articles[index];
-    const nextIndex = (index + 1) % articles.length;
-    const prevIndex = (index - 1 + articles.length) % articles.length;
+    const nextIndex = (index + 1) < articles.length ? index + 1 : 0;  // Wrap around to the first article
+    const prevIndex = (index - 1) >= 0 ? index - 1 : articles.length - 1;  // Wrap around to the last article
 
     // Generate a placeholder image URL with the article title (wrapped text)
     const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=30`;

@@ -1,11 +1,16 @@
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+import fetchRSS from '../../utils/fetchRSS';
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
+      console.log('Received POST request:', req.body);
+
       const { untrustedData } = req.body;
       const buttonIndex = untrustedData?.buttonIndex;
       const inputText = untrustedData?.inputText;
+
+      console.log('Button index:', buttonIndex);
+      console.log('Input text:', inputText);
 
       let category = 'top';
       let storyIndex = 0;
@@ -14,16 +19,21 @@ export default async function handler(req, res) {
         const [storedCategory, storedIndex] = inputText.split(':');
         category = storedCategory || 'top';
         storyIndex = parseInt(storedIndex) || 0;
+        console.log('Parsed category and story index from input text:', category, storyIndex);
       } else if (buttonIndex) {
         const categories = ['top', 'world', 'us', 'biz'];
         category = categories[buttonIndex - 1] || 'top';
+        console.log('Selected category based on button index:', category);
       }
 
+      console.log('Fetching RSS data for category:', category);
       const rssData = await fetchRSS(category);
 
       if (!rssData || rssData.length === 0) {
         throw new Error('No RSS data available');
       }
+
+      console.log('Fetched RSS data:', rssData);
 
       const currentStory = rssData[storyIndex];
 
@@ -31,9 +41,14 @@ export default async function handler(req, res) {
         throw new Error('Invalid story data');
       }
 
+      console.log('Current story:', currentStory);
+
       // Ensure the base URL is correctly prefixed
-      const imageUrl = `${baseUrl}${currentStory.imageUrl}?${Date.now()}`;
+      const imageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}${currentStory.imageUrl}?${Date.now()}`;
       const articleUrl = currentStory.url;
+
+      console.log('Constructed image URL:', imageUrl);
+      console.log('Constructed article URL:', articleUrl);
 
       res.status(200).json({
         frames: [

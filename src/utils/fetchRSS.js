@@ -9,6 +9,19 @@ const rssUrls = {
 
 const DEFAULT_IMAGE = '/default-placeholder.png';
 
+const fallbackData = [
+    {
+        title: 'Unable to fetch latest news',
+        url: '#',
+        imageUrl: DEFAULT_IMAGE,
+    },
+    {
+        title: 'Please check back later',
+        url: '#',
+        imageUrl: DEFAULT_IMAGE,
+    },
+];
+
 const parseRSS = async (url) => {
     console.log('Fetching RSS from:', url);
     try {
@@ -28,10 +41,10 @@ const parseRSS = async (url) => {
             imageUrl: item.querySelector('media\\:content')?.getAttribute('url') || DEFAULT_IMAGE,
         }));
         console.log('Parsed RSS data:', JSON.stringify(data));
-        return data;
+        return data.length > 0 ? data : fallbackData;
     } catch (error) {
         console.error('Error fetching or parsing RSS:', error);
-        throw error;
+        return fallbackData;
     }
 };
 
@@ -45,7 +58,7 @@ const fetchRSS = async (category) => {
         return await parseRSS(url);
     } catch (error) {
         console.error('Error in fetchRSS:', error);
-        throw error;
+        return fallbackData;
     }
 };
 

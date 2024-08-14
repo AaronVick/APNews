@@ -1,47 +1,92 @@
-import axios from 'axios';
-import { parseString } from 'xml2js';
+import fetchRSS from '../../utils/fetchRSS';
 
-const rssUrls = {
-    top: 'https://rsshub.app/apnews/topics/ap-top-news',
-    world: 'https://rsshub.app/apnews/topics/ap-world-news',
-    us: 'https://rsshub.app/apnews/topics/ap-us-news',
-    biz: 'https://rsshub.app/apnews/topics/ap-business-news',
-};
+const MAX_STORIES = 10;
+const PLACEHOLDER_IMAGE_BASE = 'https://placehold.co/1200x630/png?text=';
 
-const DEFAULT_IMAGE = 'https://ap-news.vercel.app/default-placeholder.png';
+function createPlaceholderImage(text) {
+  const encodedText = encodeURIComponent(text.slice(0, 100) + (text.length > 100 ? '...' : ''));
+  return `${PLACEHOLDER_IMAGE_BASE}${encodedText}`;
+}
 
-const parseRSS = async (url) => {
-    try {
-        const response = await axios.get(url);
-        return new Promise((resolve, reject) => {
-            parseString(response.data, (err, result) => {
-                if (err) {
-                    console.error('Error parsing XML:', err);
-                    reject(err);
-                } else {
-                    const items = result.rss.channel[0].item;
-                    const data = items.map(item => ({
-                        title: item.title[0] || 'No Title',
-                        url: item.link[0] || '#',
-                        imageUrl: item['media:content'] ? item['media:content'][0].$.url : DEFAULT_IMAGE,
-                    }));
-                    resolve(data);
-                }
-            });
-        });
-    } catch (error) {
-        console.error('Error fetching or parsing RSS:', error);
-        throw error; // Re-throw the error to be handled in handleAction.js
+export default async function handler(req, res) {
+  console.log('Received request:', JSON.stringify(req.body, null, 2));
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+  }
+
+  try {
+    const { untrustedData } = req.body;
+    const buttonIndex = untrustedData?.buttonIndex;
+    const inputText = untrustedData?.inputText;
+
+    console.log('Button index:', buttonIndex, 'Input text:', inputText);
+
+    let category = 'top';
+    let storyIndex = 0;
+
+    if (inputText) {
+      const [storedCategory, storedIndex] = inputText.split(':');
+      category = storedCategory || 'top';
+      storyIndex = parseInt(storedIndex) || 0;
+    } else if (buttonIndex) {
+      const categories = ['top', 'world', 'us', 'biz'];
+      category = categories[buttonIndex - 1] || 'top';
     }
-};
 
-const fetchRSS = async (category) => {
-    console.log('Fetching RSS for category:', category);
-    const url = rssUrls[category.toLowerCase()];
-    if (!url) {
-        throw new Error(`Invalid category: ${category}`);
+    console.log('Selected category:', category, 'Story index:', storyIndex);
+
+    const rssData = await fetchRSS(category);
+    console.log('RSS Data length:', rssData.length);
+
+    if (!rssData || rssData.length === 0) {
+      throw new Error('No RSS data available');
     }
-    return await parseRSS(url);
-};
 
-export default fetchRSS;
+    const stories = rssData.slice(0, MAX_STORIES);
+    const currentStory = stories[storyIndex];
+
+    console.log('Current story:', JSON.stringify(currentStory, null, 2));
+
+    if (!currentStory || !currentStory.title || !currentStory.url) {
+      throw new Error('Invalid story data');
+    }
+
+    const imageUrl = currentStory.imageUrl || createPlaceholderImage(currentStory.title);
+
+    const nextIndex = (storyIndex + 1) % stories.length;
+    const prevIndex = (storyIndex - 1 + stories.length) % stories.length;
+
+    res.status(200).json({
+      frames: [
+        {
+          version: 'vNext',
+          image: imageUrl,
+          buttons: [
+            { label: 'Next', action: 'post', target: `${category}:${nextIndex}` },
+            { label: 'Back', action: 'post', target: `${category}:${prevIndex}` },
+            { label: 'Read', action: 'link', target: currentStory.url },
+            { label: 'Home', action: 'post' }
+          ],
+          title: currentStory.title,
+          inputText: `${category}:${storyIndex}`
+        }
+      ]
+    });
+  } catch (error) {
+    console.error('Error processing action:', error);
+    const errorMessage = `Error: ${error.message}\n\nStack: ${error.stack}`;
+    res.status(200).json({
+      frames: [
+        {
+          version: 'vNext',
+          image: createPlaceholderImage(errorMessage),
+          buttons: [
+            { label: 'Home', action: 'post' }
+          ],
+          title: 'Error Occurred'
+        }
+      ]
+    });
+  }
+}

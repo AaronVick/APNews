@@ -25,65 +25,45 @@ export default async function handleAction(req, res) {
     const currentArticle = rssFeed.articles[currentIndex];
 
     // Prepare the response for Farcaster
-    res.json({
-      frames: [
-        {
-          version: "vNext",
-          image: currentArticle.imageUrl || 'https://via.placeholder.com/1200x630.png?text=No+Image+Available',
-          content: {
-            title: currentArticle.title,
-          },
-          buttons: [
-            {
-              label: "Next",
-              action: "post",
-              target: `${category}:${currentIndex + 1}`,
-              disabled: currentIndex >= rssFeed.articles.length - 1, // Disable if at the last article
-            },
-            {
-              label: "Back",
-              action: "post",
-              target: `${category}:${currentIndex - 1}`,
-              disabled: currentIndex <= 0, // Disable if at the first article
-            },
-            {
-              label: "Read",
-              action: "link",
-              target: currentArticle.link, // Link to the article URL
-            },
-            {
-              label: "Home",
-              action: "post",
-              target: "home",
-            },
-          ],
-          inputText: `${category}:${currentIndex}`, // Maintain state of the category and index
-        }
-      ]
-    });
+    res.status(200).setHeader('Content-Type', 'text/html');
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>AP News Farcaster Frame</title>
+          <meta property="fc:frame" content="vNext" />
+          <meta property="fc:frame:image" content="${currentArticle.imageUrl || 'https://via.placeholder.com/1200x630.png?text=No+Image+Available'}" />
+          <meta property="fc:frame:button:1" content="Next" />
+          <meta property="fc:frame:button:2" content="Back" />
+          <meta property="fc:frame:button:3" content="Read" />
+          <meta property="fc:frame:button:4" content="Home" />
+          <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
+        </head>
+        <body>
+          <h1>${currentArticle.title}</h1>
+        </body>
+      </html>
+    `);
   } catch (error) {
     console.error('Error processing request:', error.message);
 
     // Send an error frame with a placeholder image and error message
-    res.json({
-      frames: [
-        {
-          version: "vNext",
-          image: `https://via.placeholder.com/1200x630.png?text=Error%3A%20${encodeURIComponent(error.message)}`,
-          content: {
-            title: "Error Occurred",
-          },
-          buttons: [
-            {
-              label: "Home",
-              action: "post",
-              target: "home",
-            }
-          ],
-          inputText: `error`,
-        }
-      ]
-    });
+    res.status(200).setHeader('Content-Type', 'text/html');
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Error - AP News Farcaster Frame</title>
+          <meta property="fc:frame" content="vNext" />
+          <meta property="fc:frame:image" content="https://via.placeholder.com/1200x630.png?text=Error%3A%20${encodeURIComponent(error.message)}" />
+          <meta property="fc:frame:button:1" content="Home" />
+          <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
+        </head>
+        <body>
+          <h1>Error Occurred</h1>
+        </body>
+      </html>
+    `);
   }
 }
 
@@ -98,6 +78,8 @@ function getCategory(inputText) {
       return 'tech';
     case 'business':
       return 'business';
+    case 'home':
+      return 'top'; // Default to 'top' when returning to home
     default:
       return null;
   }

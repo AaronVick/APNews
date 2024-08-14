@@ -3,7 +3,6 @@ import fetchRSS from '../../utils/fetchRSS';
 export default async function handleAction(req, res) {
   const { untrustedData } = req.body;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ap-news.vercel.app';
-  const placeholderImage = `${baseUrl}/placeholder.png`; // Make sure this image exists in your public folder
 
   try {
     // Extract category and article index from input text
@@ -13,7 +12,7 @@ export default async function handleAction(req, res) {
     // Validate and get the category
     const validCategory = getCategory(category);
     if (!validCategory) {
-      throw new Error(`Invalid category: ${category}`);
+      throw new Error(`Invalid category: ${validCategory}`);
     }
 
     // Fetch the RSS feed for the category
@@ -24,7 +23,10 @@ export default async function handleAction(req, res) {
 
     // Ensure index is within bounds
     const currentIndex = Math.min(Math.max(index, 0), rssFeed.articles.length - 1);
-    const currentArticle = rssFeed.articles[currentArticle];
+    const currentArticle = rssFeed.articles[currentIndex];
+
+    // Generate a placeholder image URL with the article title
+    const placeholderImage = `https://placehold.co/600x400/gray/white?text=${encodeURIComponent(wrapText(currentArticle.title, 20))}`;
 
     // Prepare the response for Farcaster
     res.setHeader('Content-Type', 'text/html');
@@ -48,6 +50,9 @@ export default async function handleAction(req, res) {
   } catch (error) {
     console.error('Error processing request:', error.message);
 
+    // Generate an error placeholder image
+    const errorImage = `https://placehold.co/600x400/red/white?text=${encodeURIComponent('Error: ' + error.message)}`;
+
     // Send an error frame
     res.setHeader('Content-Type', 'text/html');
     res.status(200).send(`
@@ -55,7 +60,7 @@ export default async function handleAction(req, res) {
       <html>
         <head>
           <meta property="fc:frame" content="vNext" />
-          <meta property="fc:frame:image" content="${placeholderImage}" />
+          <meta property="fc:frame:image" content="${errorImage}" />
           <meta property="fc:frame:button:1" content="Home" />
           <meta property="fc:frame:post_url" content="${baseUrl}/api/handleAction" />
         </head>
@@ -78,4 +83,8 @@ function getCategory(inputText) {
     default:
       return 'top';
   }
+}
+
+function wrapText(text, maxLength) {
+  return text.length > maxLength ? text.slice(0, maxLength - 3) + '...' : text;
 }

@@ -10,22 +10,21 @@ const rssFeeds = {
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
-      const { action } = req.body; // Get the action (e.g., "Top", "World")
-      const category = action.toLowerCase(); // Convert the action to a lowercase string
+      const { action } = req.body;
+      const category = action.toLowerCase();
 
       console.log('Action received:', action);
 
       // Fetch the appropriate RSS feed based on the category
       const rssUrl = rssFeeds[category];
       if (!rssUrl) {
-        return res.status(400).json({ error: `Invalid action: ${action}` });
+        throw new Error(`Invalid action: ${action}`);
       }
 
       const rssData = await fetchRSS(rssUrl);
 
       if (!rssData || rssData.length === 0) {
-        console.error('Failed to fetch RSS feed.');
-        return res.status(500).json({ error: 'Failed to fetch RSS feed.' });
+        throw new Error('Failed to fetch RSS feed.');
       }
 
       // Get the first article from the RSS feed
@@ -60,7 +59,23 @@ export default async function handler(req, res) {
       });
     } catch (error) {
       console.error('Error processing action:', error);
-      res.status(500).json({ error: 'Failed to process action.' });
+
+      // Return a placeholder image with the error message wrapped as text
+      const errorMessage = encodeURIComponent(`Error: ${error.message}`);
+      const errorImageUrl = `https://via.placeholder.com/1024x536.png?text=${errorMessage}`;
+
+      res.status(200).json({
+        frames: [
+          {
+            version: 'vNext',
+            image: errorImageUrl,
+            buttons: [
+              { label: 'Home', action: 'home' }
+            ],
+            title: 'Error'
+          }
+        ]
+      });
     }
   } else {
     res.setHeader('Allow', ['POST']);

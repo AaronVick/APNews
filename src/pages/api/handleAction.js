@@ -29,9 +29,9 @@ export default async function handleAction(req, res) {
       frames: [
         {
           version: "vNext",
+          image: currentArticle.imageUrl || 'https://via.placeholder.com/1200x630.png?text=No+Image+Available',
           content: {
             title: currentArticle.title,
-            image: currentArticle.imageUrl || 'https://via.placeholder.com/1200x630.png?text=No+Image+Available',
           },
           buttons: [
             {
@@ -69,9 +69,9 @@ export default async function handleAction(req, res) {
       frames: [
         {
           version: "vNext",
+          image: `https://via.placeholder.com/1200x630.png?text=Error%3A%20${encodeURIComponent(error.message)}`,
           content: {
             title: "Error Occurred",
-            image: `https://via.placeholder.com/1200x630.png?text=Error%3A%20${encodeURIComponent(error.message)}`,
           },
           buttons: [
             {
@@ -80,7 +80,7 @@ export default async function handleAction(req, res) {
               target: "home",
             }
           ],
-          error: error.message,
+          inputText: `error`,
         }
       ]
     });

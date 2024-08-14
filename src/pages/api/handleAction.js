@@ -31,21 +31,8 @@ export default async function handler(req, res) {
         throw new Error('Invalid story data');
       }
 
-      // Ensure the image URL is unique to force a refresh
       const imageUrl = `${currentStory.imageUrl}?${Date.now()}`;
       const articleUrl = currentStory.url;
-
-      // Log the output to ensure correct data is being processed
-      console.log('Frame data:', {
-        image: imageUrl,
-        title: currentStory.title,
-        buttons: [
-          { label: 'Next', action: 'post', target: `${category}:${(storyIndex + 1) % rssData.length}` },
-          { label: 'Back', action: 'post', target: `${category}:${(storyIndex - 1 + rssData.length) % rssData.length}` },
-          { label: 'Read', action: 'link', target: articleUrl },
-          { label: 'Home', action: 'post' }
-        ]
-      });
 
       res.status(200).json({
         frames: [

@@ -80,13 +80,15 @@ export default async function handler(req, res) {
             buttons: [
               { label: 'Home', action: 'post' }
             ],
-            title: 'Error Occurred'
+            title: 'Error Occurred',
+            error: error.message,
           }
         ]
       });
     }
   } else {
     res.setHeader('Allow', ['POST']);
+    console.error(`Method ${req.method} Not Allowed`);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }

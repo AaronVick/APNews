@@ -1,6 +1,7 @@
 import fetchRSS from '../../utils/fetchRSS';
 
-const DEFAULT_IMAGE = 'https://ap-news.vercel.app/trending-news-placeholder.png';
+const MAX_STORIES = 10;
+const PLACEHOLDER_IMAGE_BASE = 'https://placehold.co/1200x630/png?text=';
 
 function validateUrl(url) {
   try {
@@ -8,8 +9,13 @@ function validateUrl(url) {
     return url;
   } catch (error) {
     console.error('Invalid URL:', url, error.message);
-    return DEFAULT_IMAGE;
+    return null;
   }
+}
+
+function createPlaceholderImage(title) {
+  const encodedTitle = encodeURIComponent(title.slice(0, 50) + (title.length > 50 ? '...' : ''));
+  return `${PLACEHOLDER_IMAGE_BASE}${encodedTitle}`;
 }
 
 export default async function handler(req, res) {
@@ -31,18 +37,27 @@ export default async function handler(req, res) {
         throw new Error('Failed to fetch RSS feed.');
       }
 
-      const firstArticle = rssData[0];
-      const headline = firstArticle.title;
-      const thumbnailUrl = validateUrl(firstArticle.imageUrl);
-      const articleUrl = validateUrl(firstArticle.url);
+      const stories = rssData.slice(0, MAX_STORIES).map((item, index) => ({
+        ...item,
+        index: index
+      }));
 
-      console.log('First article data:', { headline, thumbnailUrl, articleUrl });
+      console.log(`Fetched ${stories.length} stories`);
+
+      const currentStory = stories[0]; // Start with the first story
+      const headline = currentStory.title;
+      const thumbnailUrl = validateUrl(currentStory.imageUrl);
+      const articleUrl = validateUrl(currentStory.url);
+
+      console.log('Current story data:', { headline, thumbnailUrl, articleUrl });
+
+      const imageUrl = thumbnailUrl || createPlaceholderImage(headline);
 
       res.status(200).json({
         frames: [
           {
             version: 'vNext',
-            image: thumbnailUrl,
+            image: imageUrl,
             buttons: [
               { label: 'Next', action: 'post' },
               { label: 'Back', action: 'post' },
@@ -60,7 +75,7 @@ export default async function handler(req, res) {
         frames: [
           {
             version: 'vNext',
-            image: DEFAULT_IMAGE,
+            image: createPlaceholderImage('Error: Failed to load news'),
             buttons: [
               { label: 'Home', action: 'post' }
             ],

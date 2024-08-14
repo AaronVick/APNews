@@ -1,5 +1,39 @@
 import fetchRSS from '../../utils/fetchRSS';
 
+function createTextImage(text) {
+  const canvas = createCanvas(1200, 630);
+  const ctx = canvas.getContext('2d');
+
+  // Set background
+  ctx.fillStyle = '#4B0082';
+  ctx.fillRect(0, 0, 1200, 630);
+
+  // Set text properties
+  ctx.font = '30px Arial';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Wrap and draw text
+  const words = text.split(' ');
+  let line = '';
+  let y = 315; // Vertical center
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + ' ';
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > 1100 && i > 0) {
+      ctx.fillText(line, 600, y);
+      line = words[i] + ' ';
+      y += 40;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, 600, y);
+
+  return canvas.toDataURL();
+}
+
 export default async function handleAction(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -35,7 +69,7 @@ export default async function handleAction(req, res) {
     index = index % articles.length;
     const currentArticle = articles[index];
 
-    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title.replace(/ /g, '%20'))}&font=arial&size=30&width=1100`;
+    const imageUrl = createTextImage(currentArticle.title);
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
@@ -61,7 +95,7 @@ export default async function handleAction(req, res) {
     `);
   } catch (error) {
     console.error('Error processing request:', error);
-    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
+    const errorImageUrl = createTextImage(`Error: ${error.message}`);
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

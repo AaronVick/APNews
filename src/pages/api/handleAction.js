@@ -1,80 +1,88 @@
-import fetchRSS from '../../utils/fetchRSS';
-
 export default async function handleAction(req, res) {
-  try {
-    const { buttonIndex } = req.body.untrustedData || {};
-    console.log('Button Index:', buttonIndex);
+  const { untrustedData } = req.body;
 
-    let category;
-    switch (buttonIndex) {
-      case 1:
-        category = 'top';
-        break;
-      case 2:
-        category = 'world';
-        break;
-      case 3:
-        category = 'tech';
-        break;
-      case 4:
-        category = 'business';
-        break;
-      default:
-        throw new Error(`Invalid button index: ${buttonIndex}`);
+  try {
+    const category = getCategory(untrustedData.inputText);
+
+    if (!category) {
+      throw new Error(`Invalid category: ${untrustedData.inputText}`);
     }
 
-    console.log('Category selected:', category);
+    const rssFeed = await fetchRSS(category);
 
-    const articles = await fetchRSS(category);
-    if (!articles || articles.length === 0) {
+    if (!rssFeed || rssFeed.length === 0) {
       throw new Error(`No articles found for category: ${category}`);
     }
 
-    console.log('Fetched articles:', articles);
+    const firstArticle = rssFeed[0];
+    const imageUrl = firstArticle.image || 'https://via.placeholder.com/1200x630.png?text=No+Image+Available';
+    const articleTitle = firstArticle.title || 'No Title Available';
+    const articleLink = firstArticle.link || '#';
 
-    const article = articles[0];
-    if (!article) {
-      throw new Error(`No article found in fetched articles for category: ${category}`);
-    }
-
-    console.log('Selected article:', article);
-
-    const frameResponse = {
+    res.json({
       frames: [
         {
-          version: 'vNext',
-          image: article.image || `https://via.placeholder.com/1200x628.png?text=${encodeURIComponent(article.title)}`,
+          version: "vNext",
+          image: imageUrl,
           buttons: [
-            { label: 'Next', action: 'post', target: `${category}:1` },
-            { label: 'Back', action: 'post', target: `${category}:${articles.length - 1}` },
-            { label: 'Read', action: 'link', target: article.link },
-            { label: 'Home', action: 'post' }
+            {
+              label: "Next",
+              action: "post",
+              target: `${category}:1`
+            },
+            {
+              label: "Back",
+              action: "post",
+              target: `${category}:${rssFeed.length}`
+            },
+            {
+              label: "Read",
+              action: "link",
+              target: articleLink
+            },
+            {
+              label: "Home",
+              action: "post"
+            }
           ],
-          title: article.title,
+          title: articleTitle,
           inputText: `${category}:0`
         }
       ]
-    };
-
-    console.log('Frame response:', frameResponse);
-
-    res.status(200).json(frameResponse);
-
+    });
   } catch (error) {
-    console.error('Error occurred in handleAction:', error.message);
+    console.error('Error processing request:', error.message);
 
-    res.status(400).json({
+    res.json({
       frames: [
         {
-          version: 'vNext',
-          image: `https://via.placeholder.com/1200x630.png?text=${encodeURIComponent(`Error: ${error.message}`)}`,
+          version: "vNext",
+          image: `https://via.placeholder.com/1200x630.png?text=Error%3A%20${encodeURIComponent(error.message)}`,
           buttons: [
-            { label: 'Home', action: 'post' }
+            {
+              label: "Home",
+              action: "post"
+            }
           ],
-          title: 'Error Occurred',
+          title: "Error Occurred",
           error: error.message
         }
       ]
     });
+  }
+}
+
+function getCategory(inputText) {
+  switch (inputText.toLowerCase()) {
+    case 'top':
+      return 'ap-top-news';
+    case 'world':
+      return 'ap-world-news';
+    case 'tech':
+      return 'ap-tech-news';
+    case 'business':
+      return 'ap-business-news';
+    default:
+      return null;
   }
 }

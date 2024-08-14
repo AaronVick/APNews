@@ -7,6 +7,8 @@ const rssUrls = {
     biz: 'https://rsshub.app/apnews/topics/ap-business-news',
 };
 
+const DEFAULT_IMAGE = '/default-placeholder.png';
+
 const parseRSS = async (url) => {
     const response = await axios.get(url);
     const parser = new DOMParser();
@@ -15,7 +17,7 @@ const parseRSS = async (url) => {
     const data = Array.from(items).map(item => ({
         title: item.querySelector('title').textContent,
         url: item.querySelector('link').textContent,
-        imageUrl: item.querySelector('media\\:content')?.getAttribute('url') || '/default-placeholder.png',
+        imageUrl: item.querySelector('media\\:content')?.getAttribute('url') || DEFAULT_IMAGE,
     }));
     return data;
 };

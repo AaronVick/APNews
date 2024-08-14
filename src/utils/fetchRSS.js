@@ -1,44 +1,34 @@
 import axios from 'axios';
-import { parseString } from 'xml2js';
+import { parseStringPromise } from 'xml2js';
 
-const rssUrls = {
+const PLACEHOLDER_IMAGE_BASE = 'https://via.placeholder.com/1200x630.png?text=';
+
+function createPlaceholderImage(text) {
+  const encodedText = encodeURIComponent(text.slice(0, 100) + (text.length > 100 ? '...' : ''));
+  return `${PLACEHOLDER_IMAGE_BASE}${encodedText}`;
+}
+
+export default async function fetchRSS(category) {
+  const rssFeedUrl = {
     top: 'https://rsshub.app/apnews/topics/ap-top-news',
     world: 'https://rsshub.app/apnews/topics/ap-world-news',
     us: 'https://rsshub.app/apnews/topics/ap-us-news',
-    biz: 'https://rsshub.app/apnews/topics/ap-business-news',
-};
+    biz: 'https://rsshub.app/apnews/topics/ap-business-news'
+  }[category];
 
-const DEFAULT_IMAGE = 'https://ap-news.vercel.app/default-placeholder.png';
+  if (!rssFeedUrl) {
+    throw new Error(`Invalid category: ${category}`);
+  }
 
-const parseRSS = async (url) => {
-    try {
-        const response = await axios.get(url);
-        return new Promise((resolve, reject) => {
-            parseString(response.data, (err, result) => {
-                if (err) reject(err);
-                else {
-                    const items = result.rss.channel[0].item;
-                    const data = items.map(item => ({
-                        title: item.title[0],
-                        url: item.link[0],
-                        imageUrl: item['media:content'] ? item['media:content'][0].$.url : DEFAULT_IMAGE,
-                    }));
-                    resolve(data);
-                }
-            });
-        });
-    } catch (error) {
-        console.error('Error fetching or parsing RSS:', error);
-        return [];
-    }
-};
+  const { data } = await axios.get(rssFeedUrl);
+  
+  // Parse the RSS XML data
+  const parsedData = await parseStringPromise(data);
+  const items = parsedData.rss.channel[0].item;
 
-const fetchRSS = async (category) => {
-    const url = rssUrls[category.toLowerCase()];
-    if (!url) {
-        throw new Error(`Invalid category: ${category}`);
-    }
-    return await parseRSS(url);
-};
-
-export default fetchRSS;
+  return items.map(item => ({
+    title: item.title[0],
+    url: item.link[0],
+    imageUrl: createPlaceholderImage(item.title[0]) // Use the headline for the placeholder image
+  }));
+}

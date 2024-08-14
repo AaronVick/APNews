@@ -1,34 +1,44 @@
-import axios from 'axios';
-import { parseStringPromise } from 'xml2js';
+const axios = require('axios');
+const xml2js = require('xml2js');
 
-const PLACEHOLDER_IMAGE_BASE = 'https://via.placeholder.com/1200x628.png?text=';
+async function fetchRSS(category) {
+    const categoryUrls = {
+        'top': 'https://rsshub.app/apnews/topics/ap-top-news',
+        'world': 'https://rsshub.app/apnews/topics/ap-world-news',
+        'tech': 'https://rsshub.app/apnews/topics/ap-technology-news',
+        'business': 'https://rsshub.app/apnews/topics/ap-business-news',
+    };
 
-function createPlaceholderImage(text) {
-  const encodedText = encodeURIComponent(text.slice(0, 100) + (text.length > 100 ? '...' : ''));
-  return `${PLACEHOLDER_IMAGE_BASE}${encodedText}`;
+    const url = categoryUrls[category];
+    
+    if (!url) {
+        console.error(`Error: Invalid category provided: ${category}`);
+        return { error: `Invalid category: ${category}` };
+    }
+
+    console.log(`Fetching RSS feed for category: ${category} from URL: ${url}`);
+
+    try {
+        const response = await axios.get(url);
+        console.log(`RSS feed fetched successfully for category: ${category}`);
+
+        const parsedData = await xml2js.parseStringPromise(response.data, { mergeAttrs: true });
+        console.log(`RSS feed parsed successfully for category: ${category}`);
+
+        const articles = parsedData.rss.channel[0].item.map(item => ({
+            title: item.title[0],
+            link: item.link[0],
+            description: item.description ? item.description[0] : '',
+            pubDate: item.pubDate[0],
+            author: item.author ? item.author[0] : '',
+        }));
+
+        console.log(`Articles extracted successfully for category: ${category}`);
+        return { articles };
+    } catch (error) {
+        console.error(`Error fetching or parsing RSS feed for category: ${category}`, error);
+        return { error: `Failed to fetch or parse RSS feed for category: ${category}` };
+    }
 }
 
-export default async function fetchRSS(category) {
-  const rssFeedUrl = {
-    top: 'https://rsshub.app/apnews/topics/ap-top-news',
-    world: 'https://rsshub.app/apnews/topics/ap-world-news',
-    us: 'https://rsshub.app/apnews/topics/ap-us-news',
-    biz: 'https://rsshub.app/apnews/topics/ap-business-news'
-  }[category];
-
-  if (!rssFeedUrl) {
-    throw new Error(`Invalid category: ${category}`);
-  }
-
-  const { data } = await axios.get(rssFeedUrl);
-  
-  // Parse the RSS XML data
-  const parsedData = await parseStringPromise(data);
-  const items = parsedData.rss.channel[0].item;
-
-  return items.map(item => ({
-    title: item.title[0],
-    url: item.link[0],
-    imageUrl: createPlaceholderImage(item.title[0]) // Use the headline for the placeholder image
-  }));
-}
+module.exports = fetchRSS;

@@ -25,7 +25,7 @@ export default async function handler(req, res) {
         storyIndex = parseInt(storedIndex) || 0;
         console.log('Parsed category and story index from input text:', category, storyIndex);
       } else if (buttonIndex) {
-        const categories = ['top', 'world', 'us', 'biz'];
+        const categories = ['top', 'world', 'tech', 'biz'];
         category = categories[buttonIndex - 1] || 'top';
         console.log('Selected category based on button index:', category);
       }

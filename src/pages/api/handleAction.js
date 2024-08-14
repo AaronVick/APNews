@@ -31,7 +31,7 @@ export default async function handler(req, res) {
         throw new Error('Invalid story data');
       }
 
-      const imageUrl = `${currentStory.imageUrl}?${Date.now()}`;
+      const imageUrl = `${encodeURI(currentStory.imageUrl)}&t=${Date.now()}`;
       const articleUrl = currentStory.url;
 
       res.status(200).json({
@@ -52,9 +52,13 @@ export default async function handler(req, res) {
       });
     } catch (error) {
       console.error('Error processing action:', error);
+      console.error('Error details:', error);
+      console.error('Current story:', currentStory);
+      console.error('Category:', category);
+      console.error('Story index:', storyIndex);
 
       const errorMessage = encodeURIComponent(`Error: ${error.message}`);
-      const errorImageUrl = `https://via.placeholder.com/1200x630.png?text=${errorMessage}`;
+      const errorImageUrl = `https://via.placeholder.com/1200x628.png?text=${errorMessage}`;
 
       res.status(200).json({
         frames: [

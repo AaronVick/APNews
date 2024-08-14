@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
 
-const PLACEHOLDER_IMAGE_BASE = 'https://via.placeholder.com/1200x630.png?text=';
+const PLACEHOLDER_IMAGE_BASE = 'https://via.placeholder.com/1200x628.png?text=';
 
 function createPlaceholderImage(text) {
   const encodedText = encodeURIComponent(text.slice(0, 100) + (text.length > 100 ? '...' : ''));

@@ -1,91 +1,47 @@
-import fetchRSS from '../../utils/fetchRSS';
+import axios from 'axios';
+import { parseString } from 'xml2js';
 
-const MAX_STORIES = 10;
-const PLACEHOLDER_IMAGE_BASE = 'https://placehold.co/1200x630/png?text=';
+const rssUrls = {
+    top: 'https://rsshub.app/apnews/topics/ap-top-news',
+    world: 'https://rsshub.app/apnews/topics/ap-world-news',
+    us: 'https://rsshub.app/apnews/topics/ap-us-news',
+    biz: 'https://rsshub.app/apnews/topics/ap-business-news',
+};
 
-function validateUrl(url) {
-  try {
-    new URL(url);
-    return url;
-  } catch (error) {
-    console.error('Invalid URL:', url, error.message);
-    return null;
-  }
-}
+const DEFAULT_IMAGE = 'https://ap-news.vercel.app/default-placeholder.png';
 
-function createPlaceholderImage(title) {
-  const encodedTitle = encodeURIComponent(title.slice(0, 50) + (title.length > 50 ? '...' : ''));
-  return `${PLACEHOLDER_IMAGE_BASE}${encodedTitle}`;
-}
-
-export default async function handler(req, res) {
-  if (req.method === 'POST') {
+const parseRSS = async (url) => {
     try {
-      const { untrustedData } = req.body;
-      const buttonIndex = untrustedData?.buttonIndex;
-
-      console.log('Button index:', buttonIndex);
-
-      const categories = ['top', 'world', 'us', 'biz'];
-      const category = categories[buttonIndex - 1] || 'top';
-
-      console.log('Selected category:', category);
-
-      const rssData = await fetchRSS(category);
-
-      if (!rssData || rssData.length === 0) {
-        throw new Error('Failed to fetch RSS feed.');
-      }
-
-      const stories = rssData.slice(0, MAX_STORIES).map((item, index) => ({
-        ...item,
-        index: index
-      }));
-
-      console.log(`Fetched ${stories.length} stories`);
-
-      const currentStory = stories[0]; // Start with the first story
-      const headline = currentStory.title;
-      const thumbnailUrl = validateUrl(currentStory.imageUrl);
-      const articleUrl = validateUrl(currentStory.url);
-
-      console.log('Current story data:', { headline, thumbnailUrl, articleUrl });
-
-      const imageUrl = thumbnailUrl || createPlaceholderImage(headline);
-
-      res.status(200).json({
-        frames: [
-          {
-            version: 'vNext',
-            image: imageUrl,
-            buttons: [
-              { label: 'Next', action: 'post' },
-              { label: 'Back', action: 'post' },
-              { label: 'Read', action: 'link', target: articleUrl },
-              { label: 'Home', action: 'post' }
-            ],
-            title: headline
-          }
-        ]
-      });
+        const response = await axios.get(url);
+        return new Promise((resolve, reject) => {
+            parseString(response.data, (err, result) => {
+                if (err) {
+                    console.error('Error parsing XML:', err);
+                    reject(err);
+                } else {
+                    const items = result.rss.channel[0].item;
+                    const data = items.map(item => ({
+                        title: item.title[0] || 'No Title',
+                        url: item.link[0] || '#',
+                        imageUrl: item['media:content'] ? item['media:content'][0].$.url : DEFAULT_IMAGE,
+                    }));
+                    resolve(data);
+                }
+            });
+        });
     } catch (error) {
-      console.error('Error processing action:', error);
-
-      res.status(200).json({
-        frames: [
-          {
-            version: 'vNext',
-            image: createPlaceholderImage('Error: Failed to load news'),
-            buttons: [
-              { label: 'Home', action: 'post' }
-            ],
-            title: 'Error: ' + error.message
-          }
-        ]
-      });
+        console.error('Error fetching or parsing RSS:', error);
+        throw error; // Re-throw the error to be handled in handleAction.js
     }
-  } else {
-    res.setHeader('Allow', ['POST']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
-  }
-}
+};
+
+const fetchRSS = async (category) => {
+    console.log('Fetching RSS for category:', category);
+    const url = rssUrls[category.toLowerCase()];
+    if (!url) {
+        throw new Error(`Invalid category: ${category}`);
+    }
+    return await parseRSS(url);
+};
+
+export default fetchRSS;

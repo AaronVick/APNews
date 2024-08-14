@@ -7,6 +7,17 @@ const rssFeeds = {
   biz: 'https://rsshub.app/apnews/topics/ap-business-news'
 };
 
+function validateUrl(url) {
+  try {
+    // Validate the URL structure
+    const validUrl = new URL(url);
+    return validUrl.href;
+  } catch (error) {
+    console.error('Invalid URL:', url, error.message);
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
@@ -30,16 +41,19 @@ export default async function handler(req, res) {
       // Get the first article from the RSS feed
       const firstArticle = rssData[0];
       const headline = firstArticle.title;
-      const thumbnailUrl = firstArticle.imageUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/default-placeholder.png`;
+      const thumbnailUrl = validateUrl(firstArticle.imageUrl) || `${process.env.NEXT_PUBLIC_BASE_URL}/default-placeholder.png`;
+      const articleUrl = validateUrl(firstArticle.url);
 
-      console.log('First article data:', { headline, thumbnailUrl });
+      if (!articleUrl) {
+        throw new Error('Invalid article URL.');
+      }
+
+      console.log('First article data:', { headline, thumbnailUrl, articleUrl });
 
       // Construct a valid URL for the placeholder image
       const imageUrl = `https://via.placeholder.com/1024x536.png?text=${encodeURIComponent(headline)}`;
-      const articleUrl = firstArticle.url.startsWith('http') ? firstArticle.url : `https://${firstArticle.url}`;
 
       console.log('Constructed image URL:', imageUrl);
-      console.log('Article URL:', articleUrl);
 
       // Send the response back to Farcaster
       res.status(200).json({
@@ -60,7 +74,7 @@ export default async function handler(req, res) {
     } catch (error) {
       console.error('Error processing action:', error);
 
-      // Always provide an image URL, even in case of error
+      // Return a placeholder image with the error message wrapped as text
       const errorMessage = encodeURIComponent(`Error: ${error.message}`);
       const errorImageUrl = `https://via.placeholder.com/1024x536.png?text=${errorMessage}`;
 

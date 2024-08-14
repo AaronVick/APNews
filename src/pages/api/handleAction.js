@@ -33,8 +33,8 @@ export default async function handleAction(req, res) {
     const nextIndex = (index + 1) % articles.length;
     const prevIndex = (index - 1 + articles.length) % articles.length;
 
-    // Generate a placeholder image URL with the article title
-    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title.slice(0, 50))}&font=arial&size=30`;
+    // Generate a placeholder image URL with the article title (wrapped text)
+    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=30`;
 
     // Construct the response
     res.status(200).setHeader('Content-Type', 'text/html').send(`

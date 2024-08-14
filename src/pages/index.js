@@ -24,29 +24,20 @@ const Home = () => {
     setArticles([]);
   };
 
+  const currentImage = category && articles.length > 0 ? articles[0].imageUrl : defaultImage;
+
   return (
     <div>
       <Head>
         <title>AP News Farcaster Frame</title>
         <meta property="og:title" content="AP News" />
-        <meta property="og:image" content={category ? articles[0]?.imageUrl || defaultImage : defaultImage} />
+        <meta property="og:image" content={currentImage} />
         <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content={category ? articles[0]?.imageUrl || defaultImage : defaultImage} />
-        {!category ? (
-          <>
-            <meta property="fc:frame:button:1" content="Top" />
-            <meta property="fc:frame:button:2" content="World" />
-            <meta property="fc:frame:button:3" content="US" />
-            <meta property="fc:frame:button:4" content="Biz" />
-          </>
-        ) : (
-          <>
-            <meta property="fc:frame:button:1" content="Next" />
-            <meta property="fc:frame:button:2" content="Back" />
-            <meta property="fc:frame:button:3" content="Read" />
-            <meta property="fc:frame:button:4" content="Home" />
-          </>
-        )}
+        <meta property="fc:frame:image" content={currentImage} />
+        <meta property="fc:frame:button:1" content={category ? "Next" : "Top"} />
+        <meta property="fc:frame:button:2" content={category ? "Back" : "World"} />
+        <meta property="fc:frame:button:3" content={category ? "Read" : "US"} />
+        <meta property="fc:frame:button:4" content={category ? "Home" : "Biz"} />
       </Head>
       {category ? (
         <Frame 

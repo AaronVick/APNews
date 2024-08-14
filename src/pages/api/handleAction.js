@@ -8,6 +8,16 @@ function createPlaceholderImage(text) {
   return `${PLACEHOLDER_IMAGE_BASE}${encodedText}`;
 }
 
+function validateUrl(url) {
+  try {
+    const validUrl = new URL(url);
+    return validUrl.href;
+  } catch (error) {
+    console.error('Invalid URL detected:', url, error.message);
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   console.log('Received request:', JSON.stringify(req.body, null, 2));
 
@@ -52,7 +62,15 @@ export default async function handler(req, res) {
       throw new Error('Invalid story data');
     }
 
-    const imageUrl = currentStory.imageUrl || createPlaceholderImage(currentStory.title);
+    const imageUrl = validateUrl(currentStory.imageUrl) || createPlaceholderImage(currentStory.title);
+    const articleUrl = validateUrl(currentStory.url);
+
+    if (!articleUrl) {
+      throw new Error('Invalid article URL.');
+    }
+
+    console.log('Final image URL:', imageUrl);
+    console.log('Final article URL:', articleUrl);
 
     const nextIndex = (storyIndex + 1) % stories.length;
     const prevIndex = (storyIndex - 1 + stories.length) % stories.length;
@@ -65,7 +83,7 @@ export default async function handler(req, res) {
           buttons: [
             { label: 'Next', action: 'post', target: `${category}:${nextIndex}` },
             { label: 'Back', action: 'post', target: `${category}:${prevIndex}` },
-            { label: 'Read', action: 'link', target: currentStory.url },
+            { label: 'Read', action: 'link', target: articleUrl },
             { label: 'Home', action: 'post' }
           ],
           title: currentStory.title,

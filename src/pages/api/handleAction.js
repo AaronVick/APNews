@@ -1,4 +1,4 @@
-import fetchRSS from '../utils/fetchRSS';
+import fetchRSS from '../../utils/fetchRSS';
 
 export default async function handleAction(req, res) {
   const { untrustedData } = req.body;

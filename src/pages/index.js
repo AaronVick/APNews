@@ -1,30 +1,34 @@
 import Head from 'next/head';
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ap-news.vercel.app';
-  const defaultImage = `${baseUrl}/trending-news-placeholder.png`;
+  const imageUrl = `${baseUrl}/trending-news-placeholder.png`;
 
   return {
     props: { 
-      imageUrl: defaultImage,
+      baseUrl,
+      imageUrl,
     }
   };
 }
 
-const Home = ({ imageUrl }) => {
+const Home = ({ baseUrl, imageUrl }) => {
   return (
-    <div>
+    <>
       <Head>
         <title>AP News Farcaster Frame</title>
+        <meta property="og:title" content="AP News" />
+        <meta property="og:image" content={imageUrl} />
         <meta property="fc:frame" content="vNext" />
         <meta property="fc:frame:image" content={imageUrl} />
         <meta property="fc:frame:button:1" content="Top" />
         <meta property="fc:frame:button:2" content="World" />
         <meta property="fc:frame:button:3" content="US" />
         <meta property="fc:frame:button:4" content="Biz" />
-        <meta property="og:image" content={imageUrl} />
+        <meta property="fc:frame:post_url" content={`${baseUrl}/api/handleAction`} />
       </Head>
-    </div>
+      <div>AP News Farcaster Frame</div>
+    </>
   );
 };
 

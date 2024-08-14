@@ -17,12 +17,16 @@ const nextConfig = {
       },
     ]
   },
-  // Add this section for custom routing
+  // Combined rewrites section
   async rewrites() {
     return [
       {
         source: '/',
         destination: '/index',
+      },
+      {
+        source: '/api/rss/:path*',
+        destination: 'https://rsshub.app/:path*',
       },
     ]
   },

@@ -1,71 +1,53 @@
 import fetchRSS from '../../utils/fetchRSS';
 
-const rssFeeds = {
-  top: 'https://rsshub.app/apnews/topics/ap-top-news',
-  world: 'https://rsshub.app/apnews/topics/ap-world-news',
-  us: 'https://rsshub.app/apnews/topics/ap-us-news',
-  biz: 'https://rsshub.app/apnews/topics/ap-business-news'
-};
+const DEFAULT_IMAGE = 'https://ap-news.vercel.app/trending-news-placeholder.png';
 
 function validateUrl(url) {
   try {
-    // Validate the URL structure
-    const validUrl = new URL(url);
-    return validUrl.href;
+    new URL(url);
+    return url;
   } catch (error) {
     console.error('Invalid URL:', url, error.message);
-    return null;
+    return DEFAULT_IMAGE;
   }
 }
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
-      const { action } = req.body;
-      const category = action ? action.toLowerCase() : '';
+      const { untrustedData } = req.body;
+      const buttonIndex = untrustedData?.buttonIndex;
 
-      console.log('Action received:', action);
+      console.log('Button index:', buttonIndex);
 
-      // Fetch the appropriate RSS feed based on the category
-      const rssUrl = rssFeeds[category];
-      if (!rssUrl) {
-        throw new Error(`Invalid action: ${action}`);
-      }
+      const categories = ['top', 'world', 'us', 'biz'];
+      const category = categories[buttonIndex - 1] || 'top';
 
-      const rssData = await fetchRSS(rssUrl);
+      console.log('Selected category:', category);
+
+      const rssData = await fetchRSS(category);
 
       if (!rssData || rssData.length === 0) {
         throw new Error('Failed to fetch RSS feed.');
       }
 
-      // Get the first article from the RSS feed
       const firstArticle = rssData[0];
       const headline = firstArticle.title;
-      const thumbnailUrl = validateUrl(firstArticle.imageUrl) || `${process.env.NEXT_PUBLIC_BASE_URL}/default-placeholder.png`;
+      const thumbnailUrl = validateUrl(firstArticle.imageUrl);
       const articleUrl = validateUrl(firstArticle.url);
-
-      if (!articleUrl) {
-        throw new Error('Invalid article URL.');
-      }
 
       console.log('First article data:', { headline, thumbnailUrl, articleUrl });
 
-      // Construct a valid URL for the placeholder image
-      const imageUrl = `https://via.placeholder.com/1024x536.png?text=${encodeURIComponent(headline)}`;
-
-      console.log('Constructed image URL:', imageUrl);
-
-      // Send the response back to Farcaster
       res.status(200).json({
         frames: [
           {
             version: 'vNext',
-            image: imageUrl,
+            image: thumbnailUrl,
             buttons: [
-              { label: 'Back', action: 'back' },
-              { label: 'Next', action: 'next' },
-              { label: 'Read', action: 'read', url: articleUrl },
-              { label: 'Home', action: 'home' }
+              { label: 'Next', action: 'post' },
+              { label: 'Back', action: 'post' },
+              { label: 'Read', action: 'link', target: articleUrl },
+              { label: 'Home', action: 'post' }
             ],
             title: headline
           }
@@ -74,19 +56,15 @@ export default async function handler(req, res) {
     } catch (error) {
       console.error('Error processing action:', error);
 
-      // Return a placeholder image with the error message wrapped as text
-      const errorMessage = encodeURIComponent(`Error: ${error.message}`);
-      const errorImageUrl = `https://via.placeholder.com/1024x536.png?text=${errorMessage}`;
-
       res.status(200).json({
         frames: [
           {
             version: 'vNext',
-            image: errorImageUrl,  // Provide an error image to ensure an image URL is always returned
+            image: DEFAULT_IMAGE,
             buttons: [
-              { label: 'Home', action: 'home' }
+              { label: 'Home', action: 'post' }
             ],
-            title: 'Error'
+            title: 'Error: ' + error.message
           }
         ]
       });

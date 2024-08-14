@@ -25,7 +25,15 @@ const Home = ({ baseUrl, imageUrl }) => {
         <meta property="fc:frame:button:4" content="Biz" />
         <meta property="fc:frame:post_url" content={`${baseUrl}/api/handleAction`} />
       </Head>
-      <div>AP News Farcaster Frame</div>
+      <div>
+        <img src={imageUrl} alt="Trending News" />
+        <div>
+          <button>Top</button>
+          <button>World</button>
+          <button>US</button>
+          <button>Biz</button>
+        </div>
+      </div>
     </>
   );
 };

@@ -6,9 +6,13 @@ export default async function handler(req, res) {
       console.log('Received POST request:', req.body);
 
       const { untrustedData } = req.body;
+      if (!untrustedData) {
+        console.error('No untrustedData in the request body');
+        throw new Error('Missing untrustedData');
+      }
+
       const buttonIndex = untrustedData?.buttonIndex;
       const inputText = untrustedData?.inputText;
-
       console.log('Button index:', buttonIndex);
       console.log('Input text:', inputText);
 
@@ -30,6 +34,7 @@ export default async function handler(req, res) {
       const rssData = await fetchRSS(category);
 
       if (!rssData || rssData.length === 0) {
+        console.error('No RSS data available for category:', category);
         throw new Error('No RSS data available');
       }
 
@@ -38,6 +43,7 @@ export default async function handler(req, res) {
       const currentStory = rssData[storyIndex];
 
       if (!currentStory || !currentStory.title || !currentStory.url) {
+        console.error('Invalid story data:', currentStory);
         throw new Error('Invalid story data');
       }
 

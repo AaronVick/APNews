@@ -17,6 +17,15 @@ const nextConfig = {
       },
     ]
   },
+  // Add this section for custom routing
+  async rewrites() {
+    return [
+      {
+        source: '/',
+        destination: '/index',
+      },
+    ]
+  },
   // Modify this section for debugging
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Custom function to handle BigInt serialization

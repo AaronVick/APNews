@@ -3,10 +3,10 @@ const xml2js = require('xml2js');
 
 async function fetchRSS(category) {
     const categoryUrls = {
-        'top': 'https://rsshub.app/apnews/topics/ap-top-news',
-        'world': 'https://rsshub.app/apnews/topics/ap-world-news',
-        'tech': 'https://rsshub.app/apnews/topics/ap-technology-news',
-        'business': 'https://rsshub.app/apnews/topics/ap-business-news',
+        'top': 'http://rsshub.app/apnews/topics/ap-top-news',
+        'world': 'http://rsshub.app/apnews/topics/ap-world-news',
+        'tech': 'http://rsshub.app/apnews/topics/ap-technology-news',
+        'business': 'http://rsshub.app/apnews/topics/ap-business-news',
     };
 
     const url = categoryUrls[category];

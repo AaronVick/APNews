@@ -75,14 +75,16 @@ export default async function handleAction(req, res) {
 function getCategory(inputText) {
   switch (inputText.toLowerCase()) {
     case 'top':
-      return 'ap-top-news';
+      return 'top';
     case 'world':
-      return 'ap-world-news';
+      return 'world';
     case 'tech':
-      return 'ap-tech-news';
+      return 'tech';
     case 'business':
-      return 'ap-business-news';
+      return 'business';
     default:
       return null;
   }
 }
+
+

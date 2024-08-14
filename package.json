@@ -10,7 +10,7 @@
     "next": "12.3.4",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "cheerio": "^1.0.0-rc.10", // Add cheerio here
+    "cheerio": "^1.0.0-rc.10", // Cheerio added here
     "axios": "^0.27.2",
     "sharp": "^0.29.3",
     "xml2js": "^0.4.23"

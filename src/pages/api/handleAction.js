@@ -1,100 +1,74 @@
 import fetchRSS from '../../utils/fetchRSS';
 
 export default async function handleAction(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
   const { untrustedData } = req.body;
 
   try {
-    // Validate and get the category from the input text
-    const category = getCategory(untrustedData.inputText);
-    if (!category) {
-      throw new Error(`Invalid category: ${untrustedData.inputText}`);
+    // Determine the category based on the button pressed or input text
+    let category = 'top'; // Default category
+    let index = 0;
+
+    if (untrustedData.buttonIndex) {
+      const categories = ['top', 'world', 'tech', 'business'];
+      category = categories[untrustedData.buttonIndex - 1] || 'top';
+    } else if (untrustedData.inputText) {
+      const [storedCategory, storedIndex] = untrustedData.inputText.split(':');
+      category = storedCategory || 'top';
+      index = parseInt(storedIndex, 10) || 0;
     }
 
     // Fetch the RSS feed for the category
-    const rssFeed = await fetchRSS(category);
-    if (!rssFeed || rssFeed.articles.length === 0) {
+    const { articles } = await fetchRSS(category);
+
+    if (!articles || articles.length === 0) {
       throw new Error(`No articles found for category: ${category}`);
     }
 
-    // Get the first article from the RSS feed
-    const firstArticle = rssFeed.articles[0];
-    const imageUrl = firstArticle.image || 'https://via.placeholder.com/1200x630.png?text=No+Image+Available';
-    const articleTitle = firstArticle.title || 'No Title Available';
-    const articleLink = firstArticle.link || '#';
+    // Get the current article
+    const currentArticle = articles[index];
+    const nextIndex = (index + 1) % articles.length;
+    const prevIndex = (index - 1 + articles.length) % articles.length;
 
-    // Construct the JSON response expected by Farcaster
-    res.json({
+    // Construct the response
+    res.status(200).json({
       frames: [
         {
-          version: "vNext",
-          content: {
-            title: articleTitle,
-            image: imageUrl,
-          },
+          version: 'vNext',
+          image: `https://via.placeholder.com/1200x630.png?text=${encodeURIComponent(currentArticle.title.slice(0, 50))}`,
           buttons: [
-            {
-              label: "Next",
-              action: "post",
-              target: `${category}:1`, // Adjust for pagination
-            },
-            {
-              label: "Back",
-              action: "post",
-              target: `${category}:${rssFeed.articles.length - 1}`, // Adjust for pagination
-            },
-            {
-              label: "Read",
-              action: "link",
-              target: articleLink,
-            },
-            {
-              label: "Home",
-              action: "post",
-              target: "home",
-            },
+            { label: 'Next', action: 'post' },
+            { label: 'Previous', action: 'post' },
+            { label: 'Read', action: 'link', target: currentArticle.link },
+            { label: 'Home', action: 'post' }
           ],
-          inputText: `${category}:0`, // Maintain state of the category and pagination
+          title: currentArticle.title,
+          post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction`,
+          input: {
+            text: `${category}:${nextIndex}`
+          }
         }
       ]
     });
   } catch (error) {
-    console.error('Error processing request:', error.message);
+    console.error('Error processing request:', error);
 
-    // Send an error frame with a placeholder image and error message
-    res.json({
+    // Send an error frame
+    res.status(200).json({
       frames: [
         {
-          version: "vNext",
-          content: {
-            title: "Error Occurred",
-            image: `https://via.placeholder.com/1200x630.png?text=Error%3A%20${encodeURIComponent(error.message)}`,
-          },
+          version: 'vNext',
+          image: `https://via.placeholder.com/1200x630.png?text=${encodeURIComponent('Error: ' + error.message)}`,
           buttons: [
-            {
-              label: "Home",
-              action: "post",
-              target: "home",
-            }
+            { label: 'Home', action: 'post' }
           ],
-          error: error.message,
+          title: 'Error Occurred',
+          post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction`
         }
       ]
     });
-  }
-}
-
-// Helper function to map the input text to a category
-function getCategory(inputText) {
-  switch (inputText.toLowerCase()) {
-    case 'top':
-      return 'top';
-    case 'world':
-      return 'world';
-    case 'tech':
-      return 'tech';
-    case 'business':
-      return 'business';
-    default:
-      return null;
   }
 }

@@ -1,68 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import Header from './Header';
-import NavigationButtons from './NavigationButtons';
-import fetchRSS from '../utils/fetchRSS';
+import React, { useState } from 'react';
 
-const DEFAULT_IMAGE = '/trending-news-placeholder.png';
+const Frame = ({ initialData }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const defaultImage = '/trending-news-placeholder.png';
 
-const Frame = () => {
-    const [headlineData, setHeadlineData] = useState(null);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [category, setCategory] = useState('top');
+  const handleNavigation = (direction) => {
+    if (direction === 'next' && currentIndex < initialData.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else if (direction === 'back' && currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
 
-    useEffect(() => {
-        fetchData(category);
-    }, [category]);
+  const currentItem = initialData[currentIndex] || {};
+  const imageUrl = currentItem.imageUrl || defaultImage;
 
-    const fetchData = async (cat) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await fetchRSS(cat);
-            setHeadlineData(data);
-            setCurrentIndex(0);
-        } catch (err) {
-            setError('Failed to fetch news. Please try again.');
-            setHeadlineData([{ title: "Error loading news", imageUrl: DEFAULT_IMAGE, url: "#" }]);
-        }
-        setLoading(false);
-    };
-
-    const handleCategoryClick = (newCategory) => {
-        setCategory(newCategory);
-    };
-
-    const handleNavigation = (direction) => {
-        if (direction === 'next' && currentIndex < headlineData.length - 1) {
-            setCurrentIndex(currentIndex + 1);
-        } else if (direction === 'back' && currentIndex > 0) {
-            setCurrentIndex(currentIndex - 1);
-        }
-    };
-
-    const currentHeadline = headlineData && headlineData[currentIndex];
-
-    return (
-        <div className="frame">
-            <Header 
-                headline={currentHeadline ? currentHeadline.title : "Trending News"} 
-                imageUrl={currentHeadline ? currentHeadline.imageUrl : DEFAULT_IMAGE} 
-            />
-            <div className="categories">
-                {['top', 'world', 'us', 'biz'].map(cat => (
-                    <button key={cat} onClick={() => handleCategoryClick(cat)}>{cat}</button>
-                ))}
-            </div>
-            <NavigationButtons 
-                onBack={() => handleNavigation('back')} 
-                onNext={() => handleNavigation('next')} 
-                articleUrl={currentHeadline ? currentHeadline.url : "#"} 
-                onHome={() => setCategory('top')} 
-            />
-        </div>
-    );
+  return (
+    <div>
+      <h1>{currentItem.title || 'No title available'}</h1>
+      <img src={imageUrl} alt={currentItem.title || 'News image'} style={{ width: '100%', height: 'auto' }} />
+      <div>
+        <button onClick={() => handleNavigation('back')} disabled={currentIndex === 0}>Back</button>
+        <button onClick={() => handleNavigation('next')} disabled={currentIndex === initialData.length - 1}>Next</button>
+        <a href={currentItem.url || '#'} target="_blank" rel="noopener noreferrer">
+          <button>Read</button>
+        </a>
+      </div>
+    </div>
+  );
 };
 
 export default Frame;

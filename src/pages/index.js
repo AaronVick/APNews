@@ -26,7 +26,8 @@ const Home = ({ baseUrl, imageUrl }) => {
         <meta property="fc:frame:post_url" content={`${baseUrl}/api/handleAction`} />
       </Head>
       <div>
-        <img src={imageUrl} alt="Trending News" />
+        <h1>AP News Categories</h1>
+        <img src={imageUrl} alt="AP News Categories" />
         <div>
           <button>Top</button>
           <button>World</button>

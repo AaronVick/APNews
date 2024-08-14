@@ -8,8 +8,7 @@ export default async function handleAction(req, res) {
   const { untrustedData } = req.body;
 
   try {
-    // Determine the category based on the button pressed or input text
-    let category = 'top'; // Default category
+    let category = 'top';
     let index = 0;
 
     if (untrustedData.buttonIndex) {
@@ -21,22 +20,18 @@ export default async function handleAction(req, res) {
       index = parseInt(storedIndex, 10) || 0;
     }
 
-    // Fetch the RSS feed for the category
     const { articles } = await fetchRSS(category);
 
     if (!articles || articles.length === 0) {
       throw new Error(`No articles found for category: ${category}`);
     }
 
-    // Get the current article
     const currentArticle = articles[index];
-    const nextIndex = (index + 1) < articles.length ? index + 1 : 0;  // Wrap around to the first article
-    const prevIndex = (index - 1) >= 0 ? index - 1 : articles.length - 1;  // Wrap around to the last article
+    const nextIndex = (index + 1) < articles.length ? index + 1 : 0;
+    const prevIndex = (index - 1) >= 0 ? index - 1 : articles.length - 1;
 
-    // Generate a placeholder image URL with the article title (wrapped text)
-    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=30`;
+    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title.replace(/ /g, '%20'))}&font=arial&size=30&width=1000`;
 
-    // Construct the response
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>
@@ -49,32 +44,17 @@ export default async function handleAction(req, res) {
           <meta property="fc:frame:button:3" content="Read" />
           <meta property="fc:frame:button:4" content="Home" />
           <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
+          <meta property="fc:frame:input:text" content="${category}:${nextIndex}" />
         </head>
         <body>
           <h1>${currentArticle.title}</h1>
           <img src="${imageUrl}" alt="${currentArticle.title}" />
-          <script>
-            window.addEventListener('message', function(e) {
-              if (e.data.action === 'button') {
-                if (e.data.buttonIndex === 1) {
-                  window.location.href = '${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?category=${category}&index=${nextIndex}';
-                } else if (e.data.buttonIndex === 2) {
-                  window.location.href = '${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?category=${category}&index=${prevIndex}';
-                } else if (e.data.buttonIndex === 3) {
-                  window.open('${currentArticle.link}', '_blank');
-                } else if (e.data.buttonIndex === 4) {
-                  window.location.href = '${process.env.NEXT_PUBLIC_BASE_URL}';
-                }
-              }
-            });
-          </script>
+          <a href="${currentArticle.link}" target="_blank">Read Article</a>
         </body>
       </html>
     `);
   } catch (error) {
     console.error('Error processing request:', error);
-
-    // Send an error frame
     const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>

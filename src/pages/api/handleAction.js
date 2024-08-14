@@ -34,7 +34,7 @@ export default async function handleAction(req, res) {
     const prevIndex = (index - 1 + articles.length) % articles.length;
 
     // Generate a placeholder image URL with the article title
-    const imageUrl = `https://via.placeholder.com/1200x630.png?text=${encodeURIComponent(currentArticle.title.slice(0, 50))}`;
+    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title.slice(0, 50))}&font=arial&size=30`;
 
     // Construct the response
     res.status(200).setHeader('Content-Type', 'text/html').send(`
@@ -75,7 +75,7 @@ export default async function handleAction(req, res) {
     console.error('Error processing request:', error);
 
     // Send an error frame
-    const errorImageUrl = `https://via.placeholder.com/1200x630.png?text=${encodeURIComponent('Error: ' + error.message)}`;
+    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

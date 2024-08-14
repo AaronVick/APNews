@@ -8,18 +8,18 @@ export default async function handleAction(req, res) {
   const { untrustedData } = req.body;
 
   try {
-    let category = 'top';
-    let index = 0;
+    let category = 'top'; // Default to 'top' news
+    let index = 0; // Start at the first article
 
     if (untrustedData.buttonIndex && !untrustedData.inputText) {
-      // Initial category selection from main frame
-      const categories = ['top', 'world', 'tech', 'business'];
-      category = categories[untrustedData.buttonIndex - 1] || 'top';
+      // Initial category selection from the main frame
+      category = 'top'; // As you mentioned, the main frame only has one button for top headlines
     } else if (untrustedData.inputText) {
-      // Navigation within a category
+      // Navigation within the RSS feed
       [category, index] = untrustedData.inputText.split(':');
       index = parseInt(index, 10) || 0;
 
+      // Handle different button clicks
       if (untrustedData.buttonIndex === 1) {
         // Next article
         index++;
@@ -27,7 +27,7 @@ export default async function handleAction(req, res) {
         // Previous article
         index = Math.max(0, index - 1);
       } else if (untrustedData.buttonIndex === 4) {
-        // Home button - redirect to the original Vercel URL
+        // Home button - redirect to the main Vercel URL
         return res.redirect(302, process.env.NEXT_PUBLIC_BASE_URL);
       }
     }
@@ -44,6 +44,7 @@ export default async function handleAction(req, res) {
 
     const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title.replace(/ /g, '%20'))}&font=arial&size=30&width=1100`;
 
+    // Respond with the HTML that includes navigation buttons
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

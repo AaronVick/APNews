@@ -1,0 +1,22 @@
+{
+    "name": "farcaster-frame",
+    "version": "1.0.0",
+    "description": "A Farcaster frame for displaying trending news using RSS feeds.",
+    "main": "index.js",
+    "scripts": {
+      "start": "next start",
+      "build": "next build",
+      "dev": "next dev"
+    },
+    "dependencies": {
+      "axios": "^0.27.2",      // Ensure this version or later is included
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "next": "^12.2.3"
+    },
+    "devDependencies": {},
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+  }
+  

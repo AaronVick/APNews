@@ -4,15 +4,15 @@
   "description": "A Farcaster frame for displaying trending news using RSS feeds.",
   "main": "index.js",
   "scripts": {
-    "start": "next start",
+    "dev": "next dev",
     "build": "next build",
-    "dev": "next dev"
+    "start": "next start"
   },
   "dependencies": {
     "axios": "^0.27.2",
+    "next": "^12.3.4",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "next": "^12.2.3"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {},
   "keywords": [],

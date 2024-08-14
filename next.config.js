@@ -17,9 +17,16 @@ const nextConfig = {
       },
     ]
   },
-  // Add this section for debugging
+  // Modify this section for debugging
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    console.log('Webpack config:', JSON.stringify(config, null, 2));
+    // Custom function to handle BigInt serialization
+    const customStringify = (obj) => {
+      return JSON.stringify(obj, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      );
+    };
+    
+    console.log('Webpack config:', customStringify(config));
     return config;
   },
 }

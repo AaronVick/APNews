@@ -51,7 +51,7 @@ const parseRSS = async (url) => {
 const fetchRSS = async (category) => {
     console.log('Fetching RSS for category:', category);
     try {
-        const url = rssUrls[category];
+        const url = rssUrls[category.toLowerCase()];
         if (!url) {
             throw new Error(`Invalid category: ${category}`);
         }

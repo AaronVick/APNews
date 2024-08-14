@@ -1,31 +1,34 @@
 import React, { useState } from 'react';
+import Header from './Header';
+import NavigationButtons from './NavigationButtons';
 
-const Frame = ({ initialData }) => {
+const Frame = ({ articles, onHome }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const defaultImage = '/trending-news-placeholder.png';
 
   const handleNavigation = (direction) => {
-    if (direction === 'next' && currentIndex < initialData.length - 1) {
+    if (direction === 'next' && currentIndex < articles.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else if (direction === 'back' && currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     }
   };
 
-  const currentItem = initialData[currentIndex] || {};
-  const imageUrl = currentItem.imageUrl || defaultImage;
+  const currentArticle = articles[currentIndex] || {};
+  const imageUrl = currentArticle.imageUrl || defaultImage;
 
   return (
     <div>
-      <h1>{currentItem.title || 'No title available'}</h1>
-      <img src={imageUrl} alt={currentItem.title || 'News image'} style={{ width: '100%', height: 'auto' }} />
-      <div>
-        <button onClick={() => handleNavigation('back')} disabled={currentIndex === 0}>Back</button>
-        <button onClick={() => handleNavigation('next')} disabled={currentIndex === initialData.length - 1}>Next</button>
-        <a href={currentItem.url || '#'} target="_blank" rel="noopener noreferrer">
-          <button>Read</button>
-        </a>
-      </div>
+      <Header 
+        headline={currentArticle.title || 'No title available'} 
+        imageUrl={imageUrl}
+      />
+      <NavigationButtons 
+        onBack={() => handleNavigation('back')}
+        onNext={() => handleNavigation('next')}
+        articleUrl={currentArticle.url || '#'}
+        onHome={onHome}
+      />
     </div>
   );
 };

@@ -17,6 +17,13 @@ const nextConfig = {
       },
     ]
   },
+  // Add this section for debugging
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    console.log('Webpack config:', JSON.stringify(config, null, 2));
+    return config;
+  },
 }
+
+console.log('Next.js config:', JSON.stringify(nextConfig, null, 2));
 
 module.exports = nextConfig

@@ -4,16 +4,21 @@ import Frame from '../components/Frame';
 import fetchRSS from '../utils/fetchRSS';
 
 export async function getServerSideProps() {
+  console.log('Entering getServerSideProps');
   try {
     const initialData = await fetchRSS('top');
+    console.log('Fetched initial data:', initialData);
     return { props: { initialData } };
   } catch (error) {
+    console.error('Error in getServerSideProps:', error);
     return { props: { error: 'Failed to fetch initial data' } };
   }
 }
 
 const Home = ({ initialData, error }) => {
+  console.log('Rendering Home component');
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ap-news.vercel.app';
+  console.log('Base URL:', baseUrl);
 
   return (
     <div>

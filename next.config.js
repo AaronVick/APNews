@@ -4,6 +4,18 @@ const nextConfig = {
   images: {
     domains: ['storage.googleapis.com'], // Add any other domains you expect images from
   },
+  async rewrites() {
+    return [
+      {
+        source: '/',
+        destination: '/index',
+      },
+      {
+        source: '/api/rss/:path*',
+        destination: 'https://rsshub.app/:path*',
+      },
+    ]
+  },
   async headers() {
     return [
       {
@@ -17,20 +29,6 @@ const nextConfig = {
       },
     ]
   },
-  // Combined rewrites section
-  async rewrites() {
-    return [
-      {
-        source: '/',
-        destination: '/index',
-      },
-      {
-        source: '/api/rss/:path*',
-        destination: 'https://rsshub.app/:path*',
-      },
-    ]
-  },
-  // Modify this section for debugging
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Custom function to handle BigInt serialization
     const customStringify = (obj) => {
@@ -41,6 +39,15 @@ const nextConfig = {
     
     console.log('Webpack config:', customStringify(config));
     return config;
+  },
+  // Add this section to force IPv4
+  serverRuntimeConfig: {
+    // Will only be available on the server side
+    NODE_OPTIONS: '--dns-result-order=ipv4first'
+  },
+  publicRuntimeConfig: {
+    // Will be available on both server and client
+    staticFolder: '/static',
   },
 }
 

@@ -1,4 +1,4 @@
-import fetchRSS from '../../utils/fetchRSS';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -31,7 +31,8 @@ export default async function handler(req, res) {
         throw new Error('Invalid story data');
       }
 
-      const imageUrl = `${encodeURI(currentStory.imageUrl)}&t=${Date.now()}`;
+      // Ensure the base URL is correctly prefixed
+      const imageUrl = `${baseUrl}${currentStory.imageUrl}?${Date.now()}`;
       const articleUrl = currentStory.url;
 
       res.status(200).json({
@@ -52,13 +53,9 @@ export default async function handler(req, res) {
       });
     } catch (error) {
       console.error('Error processing action:', error);
-      console.error('Error details:', error);
-      console.error('Current story:', currentStory);
-      console.error('Category:', category);
-      console.error('Story index:', storyIndex);
 
       const errorMessage = encodeURIComponent(`Error: ${error.message}`);
-      const errorImageUrl = `https://via.placeholder.com/1200x628.png?text=${errorMessage}`;
+      const errorImageUrl = `https://via.placeholder.com/1200x630.png?text=${errorMessage}`;
 
       res.status(200).json({
         frames: [

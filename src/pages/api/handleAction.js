@@ -1,6 +1,6 @@
 import fetchRSS from '../../utils/fetchRSS';
 
-function wrapText(text, maxLineLength = 30) {
+function wrapText(text, maxLineLength = 35) {
   const words = text.split(' ');
   let lines = [];
   let currentLine = '';
@@ -18,7 +18,14 @@ function wrapText(text, maxLineLength = 30) {
     lines.push(currentLine);
   }
 
-  return lines.join('\n');
+  return lines;
+}
+
+function calculateImageHeight(lines) {
+  const baseHeight = 630;
+  const lineHeight = 70; // Adjust this value to change spacing between lines
+  const padding = 100; // Padding at top and bottom
+  return Math.max(baseHeight, lines.length * lineHeight + padding);
 }
 
 export default async function handleAction(req, res) {
@@ -47,10 +54,14 @@ export default async function handleAction(req, res) {
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
     // Wrap the full title text
-    const wrappedTitle = wrapText(currentArticle.title);
+    const wrappedTitleLines = wrapText(currentArticle.title);
+    const imageHeight = calculateImageHeight(wrappedTitleLines);
+
+    // Join the lines with line breaks for the image
+    const wrappedTitle = wrappedTitleLines.join('%0A');
 
     // Generate the placeholder image with the wrapped article title
-    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(wrappedTitle)}&font=arial&size=36`;
+    const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${encodeURIComponent(wrappedTitle)}&font=arial&size=48`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>

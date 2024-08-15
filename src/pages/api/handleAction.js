@@ -37,7 +37,16 @@ function wrapText(text) {
 }
 
 function formatTextForPlaceholder(lines) {
-  return lines.map(line => encodeURIComponent(line)).join('%0A');
+  let formattedText = lines.map(line => encodeURIComponent(line)).join('%0A');
+  
+  // Add line breaks based on the total character count
+  if (formattedText.length < 80) {
+    formattedText += '%0A'; // One line break
+  } else {
+    formattedText += '%0A%0A'; // Two line breaks
+  }
+
+  return formattedText;
 }
 
 export default async function handleAction(req, res) {
@@ -105,7 +114,7 @@ export default async function handleAction(req, res) {
   } catch (error) {
     console.error('Error processing request:', error);
 
-    const errorImageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=${FONT_SIZE}`;
+    const errorImageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&fontsize=${FONT_SIZE}&align=middle`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

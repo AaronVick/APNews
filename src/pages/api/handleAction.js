@@ -1,12 +1,12 @@
 import fetchRSS from '../../utils/fetchRSS';
 
-function wrapText(text, maxLength = 30) {
+function wrapText(text, maxLineLength = 40) {
   const words = text.split(' ');
   let lines = [];
   let currentLine = '';
 
   words.forEach(word => {
-    if ((currentLine + word).length <= maxLength) {
+    if ((currentLine + word).length <= maxLineLength) {
       currentLine += (currentLine ? ' ' : '') + word;
     } else {
       lines.push(currentLine);
@@ -46,11 +46,15 @@ export default async function handleAction(req, res) {
     const nextIndex = (currentIndex + 1) % articles.length;
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
-    // Wrap the title text
+    // Wrap the full title text
     const wrappedTitle = wrapText(currentArticle.title);
 
+    // Calculate dynamic image height based on number of lines (minimum 630px)
+    const lineCount = wrappedTitle.split('\n').length;
+    const imageHeight = Math.max(630, lineCount * 100);  // 100px per line, minimum 630px
+
     // Generate the placeholder image with the wrapped article title
-    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(wrappedTitle)}&font=arial&size=60`;
+    const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${encodeURIComponent(wrappedTitle)}&font=arial&size=48`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>

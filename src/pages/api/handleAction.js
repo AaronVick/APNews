@@ -4,7 +4,7 @@ const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 const MAX_LINES = 7; // Maximum number of lines that can fit in the image
 const MAX_CHARS_PER_LINE = 30; // Maximum characters per line
-const FONT_SIZE = 50; // Font size to ensure readability
+const FONT_SIZE = 40; // Font size to ensure readability
 
 function wrapText(text) {
   const words = text.split(' ');

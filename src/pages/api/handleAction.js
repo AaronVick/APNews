@@ -6,7 +6,7 @@ function wrapText(text, maxLineLength = 30) {
   let currentLine = '';
 
   words.forEach(word => {
-    if ((currentLine + word).length <= maxLineLength) {
+    if (currentLine.length + word.length <= maxLineLength) {
       currentLine += (currentLine ? ' ' : '') + word;
     } else {
       lines.push(currentLine);
@@ -18,14 +18,18 @@ function wrapText(text, maxLineLength = 30) {
     lines.push(currentLine);
   }
 
-  return lines;
+  return lines.join('\n');
 }
 
-function calculateImageHeight(lines) {
+function formatTextForPlaceholder(text) {
+  return text.replace(/ /g, '+').replace(/\n/g, '\\n');
+}
+
+function calculateImageHeight(lineCount) {
   const baseHeight = 630;
-  const lineHeight = 80; // Increased line height for better readability
-  const padding = 120; // Increased padding
-  return Math.max(baseHeight, lines.length * lineHeight + padding);
+  const lineHeight = 80; // Adjust this value to change spacing between lines
+  const padding = 120; // Padding at top and bottom
+  return Math.max(baseHeight, lineCount * lineHeight + padding);
 }
 
 export default async function handleAction(req, res) {
@@ -53,15 +57,14 @@ export default async function handleAction(req, res) {
     const nextIndex = (currentIndex + 1) % articles.length;
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
-    // Wrap the full title text
-    const wrappedTitleLines = wrapText(currentArticle.title);
-    const imageHeight = calculateImageHeight(wrappedTitleLines);
+    // Wrap and format the full title text
+    const wrappedTitle = wrapText(currentArticle.title);
+    const formattedTitle = formatTextForPlaceholder(wrappedTitle);
+    const lineCount = wrappedTitle.split('\n').length;
+    const imageHeight = calculateImageHeight(lineCount);
 
-    // Join the lines with spaces instead of line breaks
-    const wrappedTitle = wrappedTitleLines.join(' ');
-
-    // Generate the placeholder image with the wrapped article title
-    const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${wrappedTitle}&font=arial&size=54`;
+    // Generate the placeholder image with the wrapped and formatted article title
+    const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial&size=54`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
@@ -96,7 +99,7 @@ export default async function handleAction(req, res) {
   } catch (error) {
     console.error('Error processing request:', error);
 
-    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=Error: ${error.message}&font=arial&size=30`;
+    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=Error:+${error.message.replace(/ /g, '+')}&font=arial&size=30`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

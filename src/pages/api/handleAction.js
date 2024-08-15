@@ -8,8 +8,7 @@ export default async function handleAction(req, res) {
   const { untrustedData } = req.body;
 
   try {
-    // Fixed category since there's only one feed
-    const category = 'top';
+    const category = 'top'; // Fixed category since there's only one feed
     let index = 0;
 
     // Extract index from input_text if available
@@ -46,13 +45,13 @@ export default async function handleAction(req, res) {
           <meta property="fc:frame:button:1" content="Next" />
           <meta property="fc:frame:button:1:action" content="post" />
           <meta property="fc:frame:button:1:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:input_text" content="${nextIndex}" />
+          <meta property="fc:frame:button:1:input_text" content="${nextIndex}" />
 
           <!-- Previous Button -->
           <meta property="fc:frame:button:2" content="Previous" />
           <meta property="fc:frame:button:2:action" content="post" />
           <meta property="fc:frame:button:2:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:input_text" content="${prevIndex}" />
+          <meta property="fc:frame:button:2:input_text" content="${prevIndex}" />
 
           <!-- Read Button -->
           <meta property="fc:frame:button:3" content="Read" />

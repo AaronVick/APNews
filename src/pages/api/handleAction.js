@@ -2,22 +2,34 @@ import fetchRSS from '../../utils/fetchRSS';
 
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
+const MAX_LINES = 6; // Maximum number of lines that can fit in the image
+const MAX_CHARS_PER_LINE = 35; // Maximum characters per line
 
-function wrapText(text, maxCharsPerLine) {
+function wrapText(text) {
   const words = text.split(' ');
   let lines = [];
   let currentLine = '';
 
   for (let word of words) {
-    if ((currentLine + word).length <= maxCharsPerLine) {
+    if ((currentLine + word).length <= MAX_CHARS_PER_LINE) {
       currentLine += (currentLine ? ' ' : '') + word;
     } else {
       lines.push(currentLine);
       currentLine = word;
     }
+
+    if (lines.length === MAX_LINES - 1) {
+      // If we're on the last line, add remaining words and truncate if necessary
+      currentLine += ' ' + words.slice(words.indexOf(word) + 1).join(' ');
+      if (currentLine.length > MAX_CHARS_PER_LINE - 3) {
+        currentLine = currentLine.slice(0, MAX_CHARS_PER_LINE - 3) + '...';
+      }
+      lines.push(currentLine);
+      break;
+    }
   }
-  
-  if (currentLine) {
+
+  if (currentLine && lines.length < MAX_LINES) {
     lines.push(currentLine);
   }
 
@@ -54,11 +66,11 @@ export default async function handleAction(req, res) {
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
     // Wrap and format the full title text
-    const wrappedTitleLines = wrapText(currentArticle.title, 35); // Adjust as necessary
+    const wrappedTitleLines = wrapText(currentArticle.title);
     const formattedTitle = formatTextForPlaceholder(wrappedTitleLines);
 
     // Generate the placeholder image with the wrapped and formatted article title
-    const imageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF?text=${formattedTitle}&bold=true&fontsize=48`;
+    const imageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF.png?text=${formattedTitle}&fontsize=48&align=center&valign=middle`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
@@ -93,7 +105,7 @@ export default async function handleAction(req, res) {
   } catch (error) {
     console.error('Error processing request:', error);
 
-    const errorImageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF?text=${encodeURIComponent('Error: ' + error.message)}&bold=true&fontsize=30`;
+    const errorImageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF.png?text=${encodeURIComponent('Error: ' + error.message)}&fontsize=30&align=center&valign=middle`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

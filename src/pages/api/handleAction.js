@@ -1,3 +1,5 @@
+import fetchRSS from '../../utils/fetchRSS';
+
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 const MAX_LINES = 6; // Maximum number of lines that can fit in the image
@@ -16,7 +18,6 @@ function wrapText(text) {
       currentLine = word;
     }
 
-    // If we've filled the allowed lines but still have text, we add more lines
     if (lines.length === MAX_LINES) {
       lines.push(currentLine);
       currentLine = '';

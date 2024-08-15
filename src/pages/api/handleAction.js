@@ -30,8 +30,15 @@ function wrapText(text) {
   return lines;
 }
 
-function formatTextForPlaceholder(lines) {
-  return lines.map(line => encodeURIComponent(line)).join('%0A');
+function formatTextForPlaceholder(lines, fontSize) {
+  return lines.map(line => encodeURIComponent(line)).join('%0A') + `&size=${fontSize}`;
+}
+
+function calculateFontSize(text) {
+  const length = text.length;
+  if (length > 100) return 30; // Smaller font for very long titles
+  if (length > 70) return 40; // Medium font for long titles
+  return 48; // Default font size
 }
 
 export default async function handleAction(req, res) {
@@ -59,12 +66,15 @@ export default async function handleAction(req, res) {
     const nextIndex = (currentIndex + 1) % articles.length;
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
+    // Calculate the appropriate font size based on the title length
+    const fontSize = calculateFontSize(currentArticle.title);
+
     // Wrap and format the full title text without truncation
     const wrappedTitleLines = wrapText(currentArticle.title);
-    const formattedTitle = formatTextForPlaceholder(wrappedTitleLines);
+    const formattedTitle = formatTextForPlaceholder(wrappedTitleLines, fontSize);
 
     // Generate the placeholder image with the wrapped and formatted article title
-    const imageUrl = `https://placehold.co/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial&size=48`;
+    const imageUrl = `https://placehold.co/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>

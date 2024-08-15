@@ -1,31 +1,17 @@
 import fetchRSS from '../../utils/fetchRSS';
 
 export default async function handleAction(req, res) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { untrustedData } = req.body;
-
   try {
     const category = 'top'; // Fixed category since there's only one feed
-    let index = 0;
+    let currentIndex = 0;
 
-    // Extract index from untrustedData.buttonIndex and inputText
-    if (untrustedData.buttonIndex) {
-      switch (untrustedData.buttonIndex) {
-        case 1: // Next button
-          index = parseInt(untrustedData.inputText, 10) || 0;
-          break;
-        case 2: // Previous button
-          index = parseInt(untrustedData.inputText, 10) || 0;
-          break;
-        case 4: // Home button
-          // Do nothing, keep index at 0 to go back to the first article
-          break;
-        default:
-          index = parseInt(untrustedData.inputText, 10) || 0;
-      }
+    // Get the current index from the query parameter
+    if (req.query.index) {
+      currentIndex = parseInt(req.query.index, 10);
     }
 
     // Fetch the RSS feed for the single category
@@ -35,14 +21,12 @@ export default async function handleAction(req, res) {
       throw new Error(`No articles found in the RSS feed.`);
     }
 
-    // Check if index is within bounds
-    if (index >= articles.length || index < 0) {
-      index = 0; // Reset to the first article if out of bounds
-    }
+    // Ensure currentIndex is within bounds
+    currentIndex = (currentIndex + articles.length) % articles.length;
 
-    const currentArticle = articles[index];
-    const nextIndex = (index + 1) % articles.length;
-    const prevIndex = (index - 1 + articles.length) % articles.length;
+    const currentArticle = articles[currentIndex];
+    const nextIndex = (currentIndex + 1) % articles.length;
+    const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
     // Generate the placeholder image with the article title
     const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=50&width=1000&height=500`;
@@ -58,13 +42,11 @@ export default async function handleAction(req, res) {
 
           <meta property="fc:frame:button:1" content="Next" />
           <meta property="fc:frame:button:1:action" content="post" />
-          <meta property="fc:frame:button:1:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:button:1:input:text" content="${nextIndex}" />
+          <meta property="fc:frame:button:1:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?index=${nextIndex}" />
 
           <meta property="fc:frame:button:2" content="Previous" />
           <meta property="fc:frame:button:2:action" content="post" />
-          <meta property="fc:frame:button:2:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:button:2:input:text" content="${prevIndex}" />
+          <meta property="fc:frame:button:2:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?index=${prevIndex}" />
 
           <meta property="fc:frame:button:3" content="Read" />
           <meta property="fc:frame:button:3:action" content="link" />

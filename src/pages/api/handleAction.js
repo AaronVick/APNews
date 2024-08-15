@@ -3,7 +3,7 @@ import fetchRSS from '../../utils/fetchRSS';
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 const MAX_LINES = 6; // Maximum number of lines that can fit in the image
-const MAX_CHARS_PER_LINE = 30; // Adjusted to avoid text cut-off
+const MAX_CHARS_PER_LINE = 25; // Reduced to better fit longer titles
 
 function wrapText(text) {
   const words = text.split(' ');
@@ -36,9 +36,10 @@ function formatTextForPlaceholder(lines, fontSize) {
 
 function calculateFontSize(text) {
   const length = text.length;
-  if (length > 100) return 30; // Smaller font for very long titles
-  if (length > 70) return 40; // Medium font for long titles
-  return 48; // Default font size
+  if (length > 120) return 24; // Smaller font for very long titles
+  if (length > 100) return 28; // Medium font for long titles
+  if (length > 70) return 32; // Larger font for shorter titles
+  return 36; // Default font size
 }
 
 export default async function handleAction(req, res) {

@@ -12,6 +12,7 @@ export default async function handleAction(req, res) {
     const category = 'top'; // Fixed category since there's only one feed
     let index = 0;
 
+    // Extract index from input_text if available
     if (untrustedData.inputText) {
       index = parseInt(untrustedData.inputText, 10) || 0;
     }
@@ -23,10 +24,11 @@ export default async function handleAction(req, res) {
       throw new Error(`No articles found in the RSS feed.`);
     }
 
-    // Get the current article
+    // Ensure the index is within bounds
+    index = index >= articles.length ? 0 : index;
     const currentArticle = articles[index];
-    const nextIndex = (index + 1) % articles.length;  // Wrap around to the first article
-    const prevIndex = (index - 1 + articles.length) % articles.length;  // Wrap around to the last article
+    const nextIndex = (index + 1) % articles.length;  // Wrap around to the first article if at the end
+    const prevIndex = (index - 1 + articles.length) % articles.length;  // Wrap around to the last article if at the beginning
 
     // Generate the placeholder image with the article title
     const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=50&width=1000&height=500`;
@@ -44,13 +46,13 @@ export default async function handleAction(req, res) {
           <meta property="fc:frame:button:1" content="Next" />
           <meta property="fc:frame:button:1:action" content="post" />
           <meta property="fc:frame:button:1:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:input_text" content="${nextIndex}" />
+          <meta property="fc:frame:button:1:input_text" content="${nextIndex}" />
 
           <!-- Previous Button -->
           <meta property="fc:frame:button:2" content="Previous" />
           <meta property="fc:frame:button:2:action" content="post" />
           <meta property="fc:frame:button:2:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:input_text" content="${prevIndex}" />
+          <meta property="fc:frame:button:2:input_text" content="${prevIndex}" />
 
           <!-- Read Button -->
           <meta property="fc:frame:button:3" content="Read" />
@@ -59,8 +61,9 @@ export default async function handleAction(req, res) {
 
           <!-- Home Button -->
           <meta property="fc:frame:button:4" content="Home" />
-          <meta property="fc:frame:button:4:action" content="post_redirect" />
-          <meta property="fc:frame:button:4:target" content="${process.env.NEXT_PUBLIC_BASE_URL}" />
+          <meta property="fc:frame:button:4:action" content="post" />
+          <meta property="fc:frame:button:4:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}" />
+          <meta property="fc:frame:button:4:input_text" content="0" />
         </head>
         <body>
           <h1>${currentArticle.title}</h1>
@@ -81,8 +84,8 @@ export default async function handleAction(req, res) {
           <meta property="fc:frame" content="vNext" />
           <meta property="fc:frame:image" content="${errorImageUrl}" />
           <meta property="fc:frame:button:1" content="Home" />
-          <meta property="fc:frame:button:1:action" content="post_redirect" />
-          <meta property="fc:frame:button:1:target" content="${process.env.NEXT_PUBLIC_BASE_URL}" />
+          <meta property="fc:frame:button:1:action" content="post" />
+          <meta property="fc:frame:button:1:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}" />
         </head>
         <body>
           <h1>Error Occurred</h1>

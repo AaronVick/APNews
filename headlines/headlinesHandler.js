@@ -1,17 +1,42 @@
 import fetchRSS from '../../utils/fetchRSS';  // Adjust the path as needed
 
+const IMAGE_PATH = '/public/default-placeholder.png'; // Path to your fallback image
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
-const FONT_SIZE = 50; // Adjust the font size as needed
+const FONT_SIZE = 50; // Font size for the rendered images
 
-export default async function handleAction(req, res) {
+function wrapText(text, maxCharsPerLine = 30) {
+  const words = text.split(' ');
+  let lines = [];
+  let currentLine = '';
+
+  for (let word of words) {
+    if ((currentLine + word).length <= maxCharsPerLine) {
+      currentLine += (currentLine ? ' ' : '') + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+}
+
+function formatTextForPlaceholder(lines) {
+  return lines.map(line => encodeURIComponent(line)).join('%0A');
+}
+
+export default async function headlinesHandler(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
-    const isHeadlinesPage = req.url.includes('/headlines');
-    const category = isHeadlinesPage ? 'headlines' : 'top';
+    const category = 'top';
     let currentIndex = 0;
 
     if (req.query.index) {
@@ -26,15 +51,19 @@ export default async function handleAction(req, res) {
 
     currentIndex = (currentIndex + articles.length) % articles.length;
 
-    if (isHeadlinesPage) {
-      // Display the top 4 headlines with Read buttons
-      const headlines = articles.slice(0, 4);
-      const formattedTitles = headlines.map((article, idx) => `${idx + 1} - ${article.title}`).join('%0A');
-      const headlineButtons = headlines.map((article, idx) => `
-        <meta property="fc:frame:button:${idx + 1}" content="Read ${idx + 1}" />
-        <meta property="fc:frame:button:${idx + 1}:action" content="post" />
-        <meta property="fc:frame:button:${idx + 1}:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?index=${idx}" />
-      `).join('');
+    const showHeadlines = req.query.action === 'showHeadlines';
+
+    if (showHeadlines) {
+      const headlineImages = articles.slice(0, 4).map((article, i) => {
+        const wrappedTitleLines = wrapText(`${i + 1} - ${article.title}`);
+        const formattedTitle = formatTextForPlaceholder(wrappedTitleLines);
+
+        return {
+          imageUrl: `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${formattedTitle}&fontsize=${FONT_SIZE}&align=middle`,
+          title: article.title,
+          link: article.link,
+        };
+      });
 
       res.status(200).setHeader('Content-Type', 'text/html').send(`
         <!DOCTYPE html>
@@ -42,56 +71,37 @@ export default async function handleAction(req, res) {
           <head>
             <title>Top Headlines</title>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="/public/default-placeholder.png" />
-
-            ${headlineButtons}
-
-            <meta property="fc:frame:button:5" content="Share" />
-            <meta property="fc:frame:button:5:action" content="link" />
-            <meta property="fc:frame:button:5:target" content="${process.env.NEXT_PUBLIC_BASE_URL}/ap-news/headlines" />
+            ${headlineImages.map((image, i) => `
+              <meta property="fc:frame:button:${i + 1}" content="Read ${i + 1}" />
+              <meta property="fc:frame:button:${i + 1}:action" content="link" />
+              <meta property="fc:frame:button:${i + 1}:target" content="${image.link}" />
+            `).join('')}
           </head>
           <body>
-            <h1>Top Headlines</h1>
-            <img src="/public/default-placeholder.png" alt="Headlines" />
-            <p>${formattedTitles.replace('%0A', '<br/>')}</p>
+            ${headlineImages.map(image => `
+              <img src="${image.imageUrl}" alt="${image.title}" />
+            `).join('')}
           </body>
         </html>
       `);
     } else {
-      const currentArticle = articles[currentIndex];
-      const nextIndex = (currentIndex + 1) % articles.length;
-      const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
-
-      // Generate the placeholder image with the article title using placeholders.dev
-      const imageUrl = `https://images.placeholders.dev/?width=${IMAGE_WIDTH}&height=${IMAGE_HEIGHT}&text=${encodeURIComponent(currentArticle.title)}&bgColor=%234B0082&textColor=%23FFFFFF&fontSize=${FONT_SIZE}&textWrap=true`;
-
+      // Initial page with fallback image and buttons
       res.status(200).setHeader('Content-Type', 'text/html').send(`
         <!DOCTYPE html>
         <html>
           <head>
-            <title>${currentArticle.title}</title>
+            <title>Top Headlines</title>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${imageUrl}" />
-
-            <meta property="fc:frame:button:1" content="Next" />
+            <meta property="fc:frame:image" content="${IMAGE_PATH}" />
+            <meta property="fc:frame:button:1" content="See Headlines" />
             <meta property="fc:frame:button:1:action" content="post" />
-            <meta property="fc:frame:button:1:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?index=${nextIndex}" />
-
-            <meta property="fc:frame:button:2" content="Previous" />
-            <meta property="fc:frame:button:2:action" content="post" />
-            <meta property="fc:frame:button:2:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?index=${prevIndex}" />
-
-            <meta property="fc:frame:button:3" content="Read" />
-            <meta property="fc:frame:button:3:action" content="link" />
-            <meta property="fc:frame:button:3:target" content="${currentArticle.link}" />
-
-            <meta property="fc:frame:button:4" content="Home" />
-            <meta property="fc:frame:button:4:action" content="post" />
-            <meta property="fc:frame:button:4:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}" />
+            <meta property="fc:frame:button:1:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/headlines?action=showHeadlines" />
+            <meta property="fc:frame:button:2" content="Share" />
+            <meta property="fc:frame:button:2:action" content="link" />
+            <meta property="fc:frame:button:2:target" content="${process.env.NEXT_PUBLIC_BASE_URL}" />
           </head>
           <body>
-            <h1>${currentArticle.title}</h1>
-            <img src="${imageUrl}" alt="${currentArticle.title}" />
+            <img src="${IMAGE_PATH}" alt="Placeholder" />
           </body>
         </html>
       `);
@@ -99,7 +109,7 @@ export default async function handleAction(req, res) {
   } catch (error) {
     console.error('Error processing request:', error);
 
-    const errorImageUrl = `https://images.placeholders.dev/?width=${IMAGE_WIDTH}&height=${IMAGE_HEIGHT}&text=${encodeURIComponent('Error: ' + error.message)}&bgColor=%234B0082&textColor=%23FFFFFF&fontSize=${FONT_SIZE}`;
+    const errorImageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&fontsize=${FONT_SIZE}`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

@@ -1,10 +1,10 @@
-import fetchRSS from '../../utils/fetchRSS'; // Ensure this is the correct path to your fetchRSS function
+import fetchRSS from '../../utils/fetchRSS';  // Adjust the path as needed
 
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 const MAX_LINES = 6; // Maximum number of lines that can fit in the image
 const MAX_CHARS_PER_LINE = 30; // Maximum characters per line
-const FONT_SIZE = 60; // Updated font size to ensure readability
+const FONT_SIZE = 60; // Font size to ensure readability
 
 
 function wrapText(text) {

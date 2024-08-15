@@ -8,43 +8,35 @@ export default async function handleAction(req, res) {
   const { untrustedData } = req.body;
 
   try {
-    let category = 'top'; // Default to 'top' news
-    let index = 0; // Start at the first article
+    // Determine the category based on the button pressed or input text
+    let category = 'top'; // Default category
+    let index = 0;
 
-    if (untrustedData.buttonIndex && !untrustedData.inputText) {
-      // Initial category selection from the main frame
-      category = 'top'; // As you mentioned, the main frame only has one button for top headlines
+    if (untrustedData.buttonIndex) {
+      const categories = ['top', 'world', 'tech', 'business'];
+      category = categories[untrustedData.buttonIndex - 1] || 'top';
     } else if (untrustedData.inputText) {
-      // Navigation within the RSS feed
-      [category, index] = untrustedData.inputText.split(':');
-      index = parseInt(index, 10) || 0;
-
-      // Handle different button clicks
-      if (untrustedData.buttonIndex === 1) {
-        // Next article
-        index++;
-      } else if (untrustedData.buttonIndex === 2) {
-        // Previous article
-        index = Math.max(0, index - 1);
-      } else if (untrustedData.buttonIndex === 4) {
-        // Home button - redirect to the main Vercel URL
-        return res.redirect(302, process.env.NEXT_PUBLIC_BASE_URL);
-      }
+      const [storedCategory, storedIndex] = untrustedData.inputText.split(':');
+      category = storedCategory || 'top';
+      index = parseInt(storedIndex, 10) || 0;
     }
 
+    // Fetch the RSS feed for the category
     const { articles } = await fetchRSS(category);
 
     if (!articles || articles.length === 0) {
       throw new Error(`No articles found for category: ${category}`);
     }
 
-    // Ensure index is within bounds
-    index = index % articles.length;
+    // Get the current article
     const currentArticle = articles[index];
+    const nextIndex = (index + 1) % articles.length;  // Wrap around to the first article
+    const prevIndex = (index - 1 + articles.length) % articles.length;  // Wrap around to the last article
 
-    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title.replace(/ /g, '%20'))}&font=arial&size=30&width=1100`;
+    // Generate a placeholder image URL with the article title (wrapped text)
+    const imageUrl = `https://via.placeholder.com/1200x630/4B0082/FFFFFF.png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=30`;
 
-    // Respond with the HTML that includes navigation buttons
+    // Construct the response
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>
@@ -57,19 +49,37 @@ export default async function handleAction(req, res) {
           <meta property="fc:frame:button:3" content="Read" />
           <meta property="fc:frame:button:4" content="Home" />
           <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:input:text" content="${category}:${index}" />
-          <meta property="fc:frame:button:3:action" content="link" />
-          <meta property="fc:frame:button:3:target" content="${currentArticle.link}" />
         </head>
         <body>
           <h1>${currentArticle.title}</h1>
           <img src="${imageUrl}" alt="${currentArticle.title}" />
+          <script>
+            window.addEventListener('message', function(e) {
+              if (e.data.action === 'button') {
+                if (e.data.buttonIndex === 1) {
+                  // Next
+                  window.location.href = '${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?category=${category}&index=${nextIndex}';
+                } else if (e.data.buttonIndex === 2) {
+                  // Previous
+                  window.location.href = '${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?category=${category}&index=${prevIndex}';
+                } else if (e.data.buttonIndex === 3) {
+                  // Read: Open article in a new tab
+                  window.open('${currentArticle.link}', '_blank');
+                } else if (e.data.buttonIndex === 4) {
+                  // Home: Return to main frame
+                  window.location.href = '${process.env.NEXT_PUBLIC_BASE_URL}';
+                }
+              }
+            });
+          </script>
         </body>
       </html>
     `);
   } catch (error) {
     console.error('Error processing request:', error);
-    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
+
+    // Send an error frame
+    const errorImageUrl = `https://via.placeholder.com/1200x630/4B0082/FFFFFF.png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

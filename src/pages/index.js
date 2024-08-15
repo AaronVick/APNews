@@ -2,7 +2,7 @@ import Head from 'next/head';
 
 export async function getServerSideProps() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ap-news.vercel.app';
-  const imageUrl = 'https://ap-news.vercel.app/ap-news-logo.png'; // Update this to your actual logo image
+  const imageUrl = `${baseUrl}/trending-news-placeholder.png`; // Use the correct image name
 
   return {
     props: { 

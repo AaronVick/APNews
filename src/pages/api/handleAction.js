@@ -3,7 +3,7 @@ import fetchRSS from '../../utils/fetchRSS';
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 const MAX_LINES = 6; // Maximum number of lines that can fit in the image
-const MAX_CHARS_PER_LINE = 35; // Maximum characters per line
+const MAX_CHARS_PER_LINE = 30; // Adjusted to avoid text cut-off
 
 function wrapText(text) {
   const words = text.split(' ');
@@ -19,12 +19,11 @@ function wrapText(text) {
     }
 
     if (lines.length === MAX_LINES) {
-      lines.push(currentLine);
-      currentLine = '';
+      break; // Stop if we've hit the max lines
     }
   }
 
-  if (currentLine) {
+  if (currentLine && lines.length < MAX_LINES) {
     lines.push(currentLine);
   }
 

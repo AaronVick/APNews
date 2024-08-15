@@ -11,7 +11,7 @@ export default async function handleAction(req, res) {
     const category = 'top'; // Fixed category since there's only one feed
     let index = 0;
 
-    // Extract index from untrustedData.buttonIndex instead of inputText
+    // Extract index from untrustedData.buttonIndex and inputText
     if (untrustedData.buttonIndex) {
       switch (untrustedData.buttonIndex) {
         case 1: // Next button
@@ -21,10 +21,10 @@ export default async function handleAction(req, res) {
           index = parseInt(untrustedData.inputText, 10) || 0;
           break;
         case 4: // Home button
-          index = 0;
+          // Do nothing, keep index at 0 to go back to the first article
           break;
         default:
-          index = 0;
+          index = parseInt(untrustedData.inputText, 10) || 0;
       }
     }
 
@@ -72,8 +72,7 @@ export default async function handleAction(req, res) {
 
           <meta property="fc:frame:button:4" content="Home" />
           <meta property="fc:frame:button:4:action" content="post" />
-          <meta property="fc:frame:button:4:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:button:4:input:text" content="0" />
+          <meta property="fc:frame:button:4:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}" />
         </head>
         <body>
           <h1>${currentArticle.title}</h1>

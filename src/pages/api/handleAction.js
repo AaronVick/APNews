@@ -23,8 +23,11 @@ export default async function handleAction(req, res) {
       throw new Error(`No articles found in the RSS feed.`);
     }
 
-    // Ensure the index is within bounds
-    index = Math.min(Math.max(index, 0), articles.length - 1);
+    // Check if index is within bounds
+    if (index >= articles.length || index < 0) {
+      index = 0; // Reset to the first article if out of bounds
+    }
+
     const currentArticle = articles[index];
     const nextIndex = (index + 1) % articles.length;  // Wrap around to the first article if at the end
     const prevIndex = (index - 1 + articles.length) % articles.length;  // Wrap around to the last article if at the beginning

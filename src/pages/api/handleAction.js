@@ -3,7 +3,7 @@ import fetchRSS from '../../utils/fetchRSS';
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 const MAX_LINES = 6; // Maximum number of lines that can fit in the image
-const MAX_CHARS_PER_LINE = 25; // Reduced to better fit longer titles
+const MAX_CHARS_PER_LINE = 25; // Adjust to better fit longer titles
 
 function wrapText(text) {
   const words = text.split(' ');
@@ -73,6 +73,10 @@ export default async function handleAction(req, res) {
     // Wrap and format the full title text without truncation
     const wrappedTitleLines = wrapText(currentArticle.title);
     const formattedTitle = formatTextForPlaceholder(wrappedTitleLines, fontSize);
+
+    // Logging for validation
+    console.log("Original Title:", currentArticle.title);
+    console.log("Formatted Title:", decodeURIComponent(formattedTitle.replace(/%0A/g, ' ')));
 
     // Generate the placeholder image with the wrapped and formatted article title
     const imageUrl = `https://placehold.co/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial`;

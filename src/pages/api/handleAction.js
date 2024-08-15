@@ -6,29 +6,29 @@ function wrapText(text, maxLineLength = 30) {
   let currentLine = '';
 
   words.forEach(word => {
-    if (currentLine.length + word.length <= maxLineLength) {
-      currentLine += (currentLine ? ' ' : '') + word;
-    } else {
-      lines.push(currentLine);
+    if ((currentLine + word).length > maxLineLength && currentLine.length > 0) {
+      lines.push(currentLine.trim());
       currentLine = word;
+    } else {
+      currentLine += (currentLine ? ' ' : '') + word;
     }
   });
   
   if (currentLine) {
-    lines.push(currentLine);
+    lines.push(currentLine.trim());
   }
 
-  return lines.join('\n');
+  return lines;
 }
 
-function formatTextForPlaceholder(text) {
-  return text.replace(/ /g, '+').replace(/\n/g, '\\n');
+function formatTextForPlaceholder(lines) {
+  return lines.map(line => line.replace(/ /g, '+')).join('\\n');
 }
 
 function calculateImageHeight(lineCount) {
   const baseHeight = 630;
-  const lineHeight = 80; // Adjust this value to change spacing between lines
-  const padding = 120; // Padding at top and bottom
+  const lineHeight = 70; // Adjusted for better fit
+  const padding = 160; // Increased padding for safety
   return Math.max(baseHeight, lineCount * lineHeight + padding);
 }
 
@@ -58,10 +58,9 @@ export default async function handleAction(req, res) {
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
     // Wrap and format the full title text
-    const wrappedTitle = wrapText(currentArticle.title);
-    const formattedTitle = formatTextForPlaceholder(wrappedTitle);
-    const lineCount = wrappedTitle.split('\n').length;
-    const imageHeight = calculateImageHeight(lineCount);
+    const wrappedTitleLines = wrapText(currentArticle.title);
+    const formattedTitle = formatTextForPlaceholder(wrappedTitleLines);
+    const imageHeight = calculateImageHeight(wrappedTitleLines.length);
 
     // Generate the placeholder image with the wrapped and formatted article title
     const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial&size=54`;

@@ -1,6 +1,6 @@
 import fetchRSS from '../../utils/fetchRSS';
 
-function wrapText(text, maxLineLength = 40) {
+function wrapText(text, maxLineLength = 35) {
   const words = text.split(' ');
   let lines = [];
   let currentLine = '';
@@ -18,7 +18,7 @@ function wrapText(text, maxLineLength = 40) {
     lines.push(currentLine);
   }
 
-  return lines.join('\n');
+  return lines;
 }
 
 export default async function handleAction(req, res) {
@@ -47,14 +47,17 @@ export default async function handleAction(req, res) {
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
     // Wrap the full title text
-    const wrappedTitle = wrapText(currentArticle.title);
+    const wrappedTitleLines = wrapText(currentArticle.title);
 
     // Calculate dynamic image height based on number of lines (minimum 630px)
-    const lineCount = wrappedTitle.split('\n').length;
-    const imageHeight = Math.max(630, lineCount * 100);  // 100px per line, minimum 630px
+    const lineCount = wrappedTitleLines.length;
+    const imageHeight = Math.max(630, lineCount * 80 + 160);  // 80px per line, plus padding
+
+    // Join the lines with line breaks for the image
+    const wrappedTitle = wrappedTitleLines.join('%0A');
 
     // Generate the placeholder image with the wrapped article title
-    const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${encodeURIComponent(wrappedTitle)}&font=arial&size=48`;
+    const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${encodeURIComponent(wrappedTitle)}&font=arial&size=52&spacing=20`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>

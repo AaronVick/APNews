@@ -8,8 +8,8 @@ export default async function handleAction(req, res) {
   const { untrustedData } = req.body;
 
   try {
-    // Since there's only one RSS feed, we work with a fixed category
-    const category = 'top'; // Fixed category since there's only one feed
+    // Fixed category since there's only one feed
+    const category = 'top';
     let index = 0;
 
     // Extract index from input_text if available
@@ -25,7 +25,7 @@ export default async function handleAction(req, res) {
     }
 
     // Ensure the index is within bounds
-    index = index >= articles.length ? 0 : index;
+    index = Math.min(Math.max(index, 0), articles.length - 1);
     const currentArticle = articles[index];
     const nextIndex = (index + 1) % articles.length;  // Wrap around to the first article if at the end
     const prevIndex = (index - 1 + articles.length) % articles.length;  // Wrap around to the last article if at the beginning
@@ -46,13 +46,13 @@ export default async function handleAction(req, res) {
           <meta property="fc:frame:button:1" content="Next" />
           <meta property="fc:frame:button:1:action" content="post" />
           <meta property="fc:frame:button:1:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:button:1:input_text" content="${nextIndex}" />
+          <meta property="fc:frame:input_text" content="${nextIndex}" />
 
           <!-- Previous Button -->
           <meta property="fc:frame:button:2" content="Previous" />
           <meta property="fc:frame:button:2:action" content="post" />
           <meta property="fc:frame:button:2:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:button:2:input_text" content="${prevIndex}" />
+          <meta property="fc:frame:input_text" content="${prevIndex}" />
 
           <!-- Read Button -->
           <meta property="fc:frame:button:3" content="Read" />

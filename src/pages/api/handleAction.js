@@ -4,7 +4,7 @@ const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 const MAX_LINES = 6; // Maximum number of lines that can fit in the image
 const MAX_CHARS_PER_LINE = 30; // Maximum characters per line
-const FONT_SIZE = 60; // Font size to ensure readability
+const FONT_SIZE = 50; // Font size to ensure readability
 
 function wrapText(text) {
   const words = text.split(' ');
@@ -70,7 +70,7 @@ export default async function handleAction(req, res) {
     const formattedTitle = formatTextForPlaceholder(wrappedTitleLines);
 
     // Generate the placeholder image with the wrapped and formatted article title
-    const imageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${formattedTitle}&fontsize=${FONT_SIZE}`;
+    const imageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial&size=${FONT_SIZE}`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>

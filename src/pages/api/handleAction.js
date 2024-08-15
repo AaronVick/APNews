@@ -2,52 +2,7 @@ import fetchRSS from '../../utils/fetchRSS';  // Adjust the path as needed
 
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
-const MAX_LINES = 6; // Maximum number of lines that can fit in the image
-const MAX_CHARS_PER_LINE = 30; // Maximum characters per line
-const FONT_SIZE = 50; // Font size to ensure readability
-
-function wrapText(text) {
-  const words = text.split(' ');
-  let lines = [];
-  let currentLine = '';
-
-  for (let word of words) {
-    if ((currentLine + word).length <= MAX_CHARS_PER_LINE) {
-      currentLine += (currentLine ? ' ' : '') + word;
-    } else {
-      lines.push(currentLine);
-      currentLine = word;
-    }
-
-    if (lines.length === MAX_LINES - 1) {
-      currentLine += ' ' + words.slice(words.indexOf(word) + 1).join(' ');
-      if (currentLine.length > MAX_CHARS_PER_LINE - 3) {
-        currentLine = currentLine.slice(0, MAX_CHARS_PER_LINE - 3) + '...';
-      }
-      lines.push(currentLine);
-      break;
-    }
-  }
-
-  if (currentLine && lines.length < MAX_LINES) {
-    lines.push(currentLine);
-  }
-
-  return lines;
-}
-
-function formatTextForPlaceholder(lines) {
-  let formattedText = lines.map(line => encodeURIComponent(line)).join('%0A');
-  
-  // Add line breaks based on the total character count
-  if (formattedText.length < 80) {
-    formattedText += '%0A'; // One line break
-  } else {
-    formattedText += '%0A%0A'; // Two line breaks
-  }
-
-  return formattedText;
-}
+const FONT_SIZE = 50; // Adjust the font size as needed
 
 export default async function handleAction(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {
@@ -74,12 +29,8 @@ export default async function handleAction(req, res) {
     const nextIndex = (currentIndex + 1) % articles.length;
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
-    // Wrap and format the full title text
-    const wrappedTitleLines = wrapText(currentArticle.title);
-    const formattedTitle = formatTextForPlaceholder(wrappedTitleLines);
-
-    // Generate the placeholder image with the wrapped and formatted article title
-    const imageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${formattedTitle}&fontsize=${FONT_SIZE}&align=middle`;
+    // Generate the placeholder image with the article title using placeholders.dev
+    const imageUrl = `https://images.placeholders.dev/?width=${IMAGE_WIDTH}&height=${IMAGE_HEIGHT}&text=${encodeURIComponent(currentArticle.title)}&bgColor=%234B0082&textColor=%23FFFFFF&fontSize=${FONT_SIZE}&textWrap=true`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
@@ -114,7 +65,7 @@ export default async function handleAction(req, res) {
   } catch (error) {
     console.error('Error processing request:', error);
 
-    const errorImageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&fontsize=${FONT_SIZE}&align=middle`;
+    const errorImageUrl = `https://images.placeholders.dev/?width=${IMAGE_WIDTH}&height=${IMAGE_HEIGHT}&text=${encodeURIComponent('Error: ' + error.message)}&bgColor=%234B0082&textColor=%23FFFFFF&fontSize=${FONT_SIZE}`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

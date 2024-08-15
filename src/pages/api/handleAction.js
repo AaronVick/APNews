@@ -1,37 +1,57 @@
 import fetchRSS from '../../utils/fetchRSS';
 
+function wrapText(text, maxLength = 30) {
+  const words = text.split(' ');
+  let lines = [];
+  let currentLine = '';
+
+  words.forEach(word => {
+    if ((currentLine + word).length <= maxLength) {
+      currentLine += (currentLine ? ' ' : '') + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  });
+  
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines.join('\n');
+}
+
 export default async function handleAction(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
-    const category = 'top'; // Fixed category since there's only one feed
+    const category = 'top';
     let currentIndex = 0;
 
-    // Get the current index from the query parameter
     if (req.query.index) {
       currentIndex = parseInt(req.query.index, 10);
     }
 
-    // Fetch the RSS feed for the single category
     const { articles } = await fetchRSS(category);
 
     if (!articles || articles.length === 0) {
       throw new Error(`No articles found in the RSS feed.`);
     }
 
-    // Ensure currentIndex is within bounds
     currentIndex = (currentIndex + articles.length) % articles.length;
 
     const currentArticle = articles[currentIndex];
     const nextIndex = (currentIndex + 1) % articles.length;
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
-    // Generate the placeholder image with the full article title, wrapped and with larger font
-    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=60&width=1000&height=500&twrap=true`;
+    // Wrap the title text
+    const wrappedTitle = wrapText(currentArticle.title);
 
-    // Construct the HTML response with the correct meta tags
+    // Generate the placeholder image with the wrapped article title
+    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(wrappedTitle)}&font=arial&size=60`;
+
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>
@@ -65,8 +85,7 @@ export default async function handleAction(req, res) {
   } catch (error) {
     console.error('Error processing request:', error);
 
-    // Send an error frame with the error message
-    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30&width=1000&height=500`;
+    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

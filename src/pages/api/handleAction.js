@@ -33,8 +33,8 @@ export default async function handleAction(req, res) {
     const nextIndex = (index + 1) % articles.length;  // Wrap around to the first article
     const prevIndex = (index - 1 + articles.length) % articles.length;  // Wrap around to the last article
 
-    // Generate a placeholder image URL with the article title (wrapped text)
-    const imageUrl = `https://via.placeholder.com/1200x630/4B0082/FFFFFF.png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=30`;
+    // Increase font size and wrap text in the image
+    const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=50&width=1000&height=500`;
 
     // Construct the response
     res.status(200).setHeader('Content-Type', 'text/html').send(`
@@ -79,7 +79,7 @@ export default async function handleAction(req, res) {
     console.error('Error processing request:', error);
 
     // Send an error frame
-    const errorImageUrl = `https://via.placeholder.com/1200x630/4B0082/FFFFFF.png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
+    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30&width=1000&height=500`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

@@ -70,7 +70,7 @@ export default async function handleAction(req, res) {
     const formattedTitle = formatTextForPlaceholder(wrappedTitleLines);
 
     // Generate the placeholder image with the wrapped and formatted article title
-    const imageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial&size=${FONT_SIZE}`;
+    const imageUrl = `https://place-hold.it/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${formattedTitle}&fontsize=${FONT_SIZE}&align=middle`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>

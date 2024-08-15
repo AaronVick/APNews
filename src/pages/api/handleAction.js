@@ -8,24 +8,23 @@ export default async function handleAction(req, res) {
   const { untrustedData } = req.body;
 
   try {
-    // Determine the category based on the button pressed or input text
-    let category = 'top'; // Default category
+    // Since there's only one RSS feed, we'll directly fetch it
+    const category = 'top'; // Fixed category since there's only one feed
     let index = 0;
 
-    if (untrustedData.buttonIndex) {
-      const categories = ['top', 'world', 'tech', 'business'];
-      category = categories[untrustedData.buttonIndex - 1] || 'top';
-    } else if (untrustedData.inputText) {
-      const [storedCategory, storedIndex] = untrustedData.inputText.split(':');
-      category = storedCategory || 'top';
+    if (untrustedData.inputText) {
+      const storedIndex = untrustedData.inputText;
       index = parseInt(storedIndex, 10) || 0;
     }
 
-    // Fetch the RSS feed for the category
+    // Fetch the RSS feed for the single category
     const { articles } = await fetchRSS(category);
 
+    // Log the articles for verification
+    console.log(`Fetched articles:`, articles);
+
     if (!articles || articles.length === 0) {
-      throw new Error(`No articles found for category: ${category}`);
+      throw new Error(`No articles found in the RSS feed.`);
     }
 
     // Get the current article
@@ -33,10 +32,13 @@ export default async function handleAction(req, res) {
     const nextIndex = (index + 1) % articles.length;  // Wrap around to the first article
     const prevIndex = (index - 1 + articles.length) % articles.length;  // Wrap around to the last article
 
-    // Increase font size and wrap text in the image
+    // Log navigation indices for verification
+    console.log(`Current Index: ${index}, Next Index: ${nextIndex}, Previous Index: ${prevIndex}`);
+
+    // Generate the placeholder image with the article title
     const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=50&width=1000&height=500`;
 
-    // Construct the response with proper meta tags
+    // Construct the HTML response with the correct meta tags
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>
@@ -46,37 +48,22 @@ export default async function handleAction(req, res) {
           <meta property="fc:frame:image" content="${imageUrl}" />
           <meta property="fc:frame:button:1" content="Next" />
           <meta property="fc:frame:button:2" content="Previous" />
-          <meta property="fc:frame:button:3" content="Read" href="${currentArticle.link}" /> <!-- Correct usage for an external link -->
+          <meta property="fc:frame:button:3" content="Read" />
+          <meta property="fc:frame:button:3:link" content="${currentArticle.link}" />
           <meta property="fc:frame:button:4" content="Home" />
           <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction" />
-          <meta property="fc:frame:input_text" content="${category}:${index}" />
+          <meta property="fc:frame:input_text" content="${index}" />
         </head>
         <body>
           <h1>${currentArticle.title}</h1>
           <img src="${imageUrl}" alt="${currentArticle.title}" />
-          <script>
-            window.addEventListener('message', function(e) {
-              if (e.data.action === 'button') {
-                if (e.data.buttonIndex === 1) {
-                  // Next
-                  window.location.href = '${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?category=${category}&index=${nextIndex}';
-                } else if (e.data.buttonIndex === 2) {
-                  // Previous
-                  window.location.href = '${process.env.NEXT_PUBLIC_BASE_URL}/api/handleAction?category=${category}&index=${prevIndex}';
-                } else if (e.data.buttonIndex === 4) {
-                  // Home: Return to main frame
-                  window.location.href = '${process.env.NEXT_PUBLIC_BASE_URL}';
-                }
-              }
-            });
-          </script>
         </body>
       </html>
     `);
   } catch (error) {
     console.error('Error processing request:', error);
 
-    // Send an error frame
+    // Send an error frame with the error message
     const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30&width=1000&height=500`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>

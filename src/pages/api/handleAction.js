@@ -1,25 +1,36 @@
 import fetchRSS from '../../utils/fetchRSS';
 
-function countWords(text) {
-  return text.trim().split(/\s+/).length;
-}
+const IMAGE_WIDTH = 1200;
+const IMAGE_HEIGHT = 630;
+const MAX_LINES = 6; // Maximum number of lines that can fit in the image
+const MAX_CHARS_PER_LINE = 35; // Maximum characters per line
 
-function wrapText(text, maxLineLength = 30) {
+function wrapText(text) {
   const words = text.split(' ');
   let lines = [];
   let currentLine = '';
 
-  words.forEach(word => {
-    if ((currentLine + word).length > maxLineLength && currentLine.length > 0) {
-      lines.push(currentLine.trim());
-      currentLine = word;
-    } else {
+  for (let word of words) {
+    if ((currentLine + word).length <= MAX_CHARS_PER_LINE) {
       currentLine += (currentLine ? ' ' : '') + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
     }
-  });
+    
+    if (lines.length === MAX_LINES - 1) {
+      // If we're on the last line, add remaining words and truncate if necessary
+      currentLine += ' ' + words.slice(words.indexOf(word) + 1).join(' ');
+      if (currentLine.length > MAX_CHARS_PER_LINE - 3) {
+        currentLine = currentLine.slice(0, MAX_CHARS_PER_LINE - 3) + '...';
+      }
+      lines.push(currentLine);
+      break;
+    }
+  }
   
-  if (currentLine) {
-    lines.push(currentLine.trim());
+  if (currentLine && lines.length < MAX_LINES) {
+    lines.push(currentLine);
   }
 
   return lines;
@@ -27,13 +38,6 @@ function wrapText(text, maxLineLength = 30) {
 
 function formatTextForPlaceholder(lines) {
   return lines.map(line => encodeURIComponent(line)).join('%0A');
-}
-
-function calculateImageHeight(lineCount) {
-  const baseHeight = 630;
-  const lineHeight = 70;
-  const padding = 200; // Increased padding for safety
-  return Math.max(baseHeight, lineCount * lineHeight + padding);
 }
 
 export default async function handleAction(req, res) {
@@ -61,30 +65,12 @@ export default async function handleAction(req, res) {
     const nextIndex = (currentIndex + 1) % articles.length;
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
-    // Count words in the original title
-    const originalWordCount = countWords(currentArticle.title);
-
     // Wrap and format the full title text
     const wrappedTitleLines = wrapText(currentArticle.title);
     const formattedTitle = formatTextForPlaceholder(wrappedTitleLines);
-    
-    // Count words in the formatted title
-    const formattedWordCount = countWords(decodeURIComponent(formattedTitle.replace(/%0A/g, ' ')));
 
-    // If word counts don't match, use a different approach
-    if (originalWordCount !== formattedWordCount) {
-      console.error("Word count mismatch. Using fallback method.");
-      const fallbackTitle = encodeURIComponent(currentArticle.title);
-      const imageHeight = calculateImageHeight(Math.ceil(currentArticle.title.length / 30));
-      const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${fallbackTitle}&font=arial&size=48`;
-      
-      // Rest of the code remains the same...
-    } else {
-      const imageHeight = calculateImageHeight(wrappedTitleLines.length);
-      const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial&size=54`;
-      
-      // Rest of the code remains the same...
-    }
+    // Generate the placeholder image with the wrapped and formatted article title
+    const imageUrl = `https://placehold.co/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial&size=48`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
@@ -119,7 +105,7 @@ export default async function handleAction(req, res) {
   } catch (error) {
     console.error('Error processing request:', error);
 
-    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
+    const errorImageUrl = `https://placehold.co/${IMAGE_WIDTH}x${IMAGE_HEIGHT}/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

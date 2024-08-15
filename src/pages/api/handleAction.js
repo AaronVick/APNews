@@ -1,6 +1,6 @@
 import fetchRSS from '../../utils/fetchRSS';
 
-function wrapText(text, maxLineLength = 35) {
+function wrapText(text, maxLineLength = 30) {
   const words = text.split(' ');
   let lines = [];
   let currentLine = '';
@@ -23,8 +23,8 @@ function wrapText(text, maxLineLength = 35) {
 
 function calculateImageHeight(lines) {
   const baseHeight = 630;
-  const lineHeight = 70; // Adjust this value to change spacing between lines
-  const padding = 100; // Padding at top and bottom
+  const lineHeight = 80; // Increased line height for better readability
+  const padding = 120; // Increased padding
   return Math.max(baseHeight, lines.length * lineHeight + padding);
 }
 
@@ -57,11 +57,11 @@ export default async function handleAction(req, res) {
     const wrappedTitleLines = wrapText(currentArticle.title);
     const imageHeight = calculateImageHeight(wrappedTitleLines);
 
-    // Join the lines with line breaks for the image
-    const wrappedTitle = wrappedTitleLines.join('%0A');
+    // Join the lines with spaces instead of line breaks
+    const wrappedTitle = wrappedTitleLines.join(' ');
 
     // Generate the placeholder image with the wrapped article title
-    const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${encodeURIComponent(wrappedTitle)}&font=arial&size=48`;
+    const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${wrappedTitle}&font=arial&size=54`;
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
@@ -96,7 +96,7 @@ export default async function handleAction(req, res) {
   } catch (error) {
     console.error('Error processing request:', error);
 
-    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
+    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=Error: ${error.message}&font=arial&size=30`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

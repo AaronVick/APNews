@@ -1,5 +1,9 @@
 import fetchRSS from '../../utils/fetchRSS';
 
+function countWords(text) {
+  return text.trim().split(/\s+/).length;
+}
+
 function wrapText(text, maxLineLength = 30) {
   const words = text.split(' ');
   let lines = [];
@@ -22,13 +26,13 @@ function wrapText(text, maxLineLength = 30) {
 }
 
 function formatTextForPlaceholder(lines) {
-  return lines.map(line => line.replace(/ /g, '+')).join('\\n');
+  return lines.map(line => encodeURIComponent(line)).join('%0A');
 }
 
 function calculateImageHeight(lineCount) {
   const baseHeight = 630;
-  const lineHeight = 70; // Adjusted for better fit
-  const padding = 160; // Increased padding for safety
+  const lineHeight = 70;
+  const padding = 200; // Increased padding for safety
   return Math.max(baseHeight, lineCount * lineHeight + padding);
 }
 
@@ -57,13 +61,30 @@ export default async function handleAction(req, res) {
     const nextIndex = (currentIndex + 1) % articles.length;
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
+    // Count words in the original title
+    const originalWordCount = countWords(currentArticle.title);
+
     // Wrap and format the full title text
     const wrappedTitleLines = wrapText(currentArticle.title);
     const formattedTitle = formatTextForPlaceholder(wrappedTitleLines);
-    const imageHeight = calculateImageHeight(wrappedTitleLines.length);
+    
+    // Count words in the formatted title
+    const formattedWordCount = countWords(decodeURIComponent(formattedTitle.replace(/%0A/g, ' ')));
 
-    // Generate the placeholder image with the wrapped and formatted article title
-    const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial&size=54`;
+    // If word counts don't match, use a different approach
+    if (originalWordCount !== formattedWordCount) {
+      console.error("Word count mismatch. Using fallback method.");
+      const fallbackTitle = encodeURIComponent(currentArticle.title);
+      const imageHeight = calculateImageHeight(Math.ceil(currentArticle.title.length / 30));
+      const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${fallbackTitle}&font=arial&size=48`;
+      
+      // Rest of the code remains the same...
+    } else {
+      const imageHeight = calculateImageHeight(wrappedTitleLines.length);
+      const imageUrl = `https://placehold.co/1200x${imageHeight}/4B0082/FFFFFF/png?text=${formattedTitle}&font=arial&size=54`;
+      
+      // Rest of the code remains the same...
+    }
 
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
@@ -98,7 +119,7 @@ export default async function handleAction(req, res) {
   } catch (error) {
     console.error('Error processing request:', error);
 
-    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=Error:+${error.message.replace(/ /g, '+')}&font=arial&size=30`;
+    const errorImageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent('Error: ' + error.message)}&font=arial&size=30`;
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>

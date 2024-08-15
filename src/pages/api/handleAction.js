@@ -1,5 +1,3 @@
-import fetchRSS from '../../utils/fetchRSS';
-
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 const MAX_LINES = 6; // Maximum number of lines that can fit in the image
@@ -17,19 +15,15 @@ function wrapText(text) {
       lines.push(currentLine);
       currentLine = word;
     }
-    
-    if (lines.length === MAX_LINES - 1) {
-      // If we're on the last line, add remaining words and truncate if necessary
-      currentLine += ' ' + words.slice(words.indexOf(word) + 1).join(' ');
-      if (currentLine.length > MAX_CHARS_PER_LINE - 3) {
-        currentLine = currentLine.slice(0, MAX_CHARS_PER_LINE - 3) + '...';
-      }
+
+    // If we've filled the allowed lines but still have text, we add more lines
+    if (lines.length === MAX_LINES) {
       lines.push(currentLine);
-      break;
+      currentLine = '';
     }
   }
-  
-  if (currentLine && lines.length < MAX_LINES) {
+
+  if (currentLine) {
     lines.push(currentLine);
   }
 
@@ -65,7 +59,7 @@ export default async function handleAction(req, res) {
     const nextIndex = (currentIndex + 1) % articles.length;
     const prevIndex = (currentIndex - 1 + articles.length) % articles.length;
 
-    // Wrap and format the full title text
+    // Wrap and format the full title text without truncation
     const wrappedTitleLines = wrapText(currentArticle.title);
     const formattedTitle = formatTextForPlaceholder(wrappedTitleLines);
 

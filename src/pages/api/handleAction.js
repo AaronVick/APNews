@@ -36,7 +36,7 @@ export default async function handleAction(req, res) {
     // Increase font size and wrap text in the image
     const imageUrl = `https://placehold.co/1200x630/4B0082/FFFFFF/png?text=${encodeURIComponent(currentArticle.title)}&font=arial&size=50&width=1000&height=500`;
 
-    // Construct the response
+    // Construct the response with proper link for the "Read" button
     res.status(200).setHeader('Content-Type', 'text/html').send(`
       <!DOCTYPE html>
       <html>
